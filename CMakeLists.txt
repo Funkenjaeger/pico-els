@@ -43,6 +43,7 @@ pico_set_program_version(pico-els "0.1")
 # Generate PIO headers
 pico_generate_pio_header(pico-els ${CMAKE_CURRENT_LIST_DIR}/blink.pio)
 pico_generate_pio_header(pico-els ${CMAKE_CURRENT_LIST_DIR}/quadrature.pio)
+pico_generate_pio_header(pico-els ${CMAKE_CURRENT_LIST_DIR}/stepper.pio)
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(pico-els 1)
