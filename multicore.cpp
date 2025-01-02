@@ -5,10 +5,6 @@
 //
 // Copyright (c) 2025 Evan Dudzik
 //
-// This software is based on the Clough42 Electronic Leadscrew project under the MIT license
-// https://github.com/clough42/electronic-leadscrew
-// Leveraged portions of this software are Copyright (c) 2019 James Clough
-//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -27,52 +23,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
-#ifndef __USERINTERFACE_H
-#define __USERINTERFACE_H
-
-#include <cstdint>
-#include "ControlPanel.h"
 #include "multicore.h"
-#include "Tables.h"
 
-typedef struct MESSAGE
-{
-    uint8_t message[8];
-    uint16_t displayTime;
-    const MESSAGE *next;
-} MESSAGE;
+queue_t feed_queue;
+queue_t poweron_queue;
+queue_t reverse_queue;
+queue_t corestatus_queue;
 
-class UserInterface
-{
-private:
-    ControlPanel *controlPanel;
-    CoreProxy *core;
-    FeedTableFactory *feedTableFactory;
+CoreProxy :: CoreProxy ( void ) {
 
-    bool metric;
-    bool thread;
-    bool reverse;
+}
 
-    FeedTable *feedTable;
+void CoreProxy :: setFeed(const FEED_THREAD *feed) {
+    float _feed = (float)feed->numerator / (float) feed->denominator;
+    queue_add_blocking(&feed_queue, &_feed);
+}
 
-    KEY_REG keys;
+void CoreProxy :: setReverse(bool reverse) {
+    queue_add_blocking(&reverse_queue, &reverse);
+}
 
-    const MESSAGE *message;
-    uint16_t messageTime;
+uint16_t CoreProxy :: getRPM(void) {
+    return _rpm;
+}
 
-    const FEED_THREAD *loadFeedTable();
-    LED_REG calculateLEDs();
-    void setMessage(const MESSAGE *message);
-    void overrideMessage( void );
-    void clearMessage( void );
+bool CoreProxy :: isAlarm(void) {
+    return _isAlarm;
+}
 
-public:
-    UserInterface(ControlPanel *controlPanel, CoreProxy *core, FeedTableFactory *feedTableFactory);
+bool CoreProxy :: isPowerOn(void) {
+    return _powerOn;
+}
 
-    void loop( void );
+void CoreProxy :: setPowerOn(bool state) {
+    queue_add_blocking(&poweron_queue, &state);
+}
 
-    void panicStepBacklog( void );
-};
-
-#endif // __USERINTERFACE_H
+void CoreProxy :: checkStatus(void) {
+    corestatus_t entry;
+    if(queue_try_remove(&corestatus_queue, &entry)) {
+        _rpm = entry.rpm;
+        _isAlarm = entry.isAlarm;
+        _powerOn = entry.powerOn;
+    }
+}

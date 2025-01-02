@@ -31,6 +31,7 @@
 #include <cstdint>
 #include <cmath>
 #include "pico/stdlib.h"
+#include "pico/util/queue.h"
 #include "hardware/pio.h"
 
 //#include "SanityCheck.h"
@@ -39,16 +40,19 @@
 #include "Encoder.h"
 #include "Core.h"
 #include "UserInterface.h"
+#include "multicore.h"
 
 #include "blink.pio.h"
 
-bool core_timer_callback( repeating_timer *rt );
+bool core_motion_timer_callback( repeating_timer*);
+bool core1_timer_callback( repeating_timer*);
+bool pollcorestatus_timer_callback( repeating_timer*);
+void core1_entry(void);
+
 
 void blink_pin_forever(PIO pio, uint sm, uint offset, uint pin, uint freq) {
     blink_program_init(pio, sm, offset, pin);
     pio_sm_set_enabled(pio, sm, true);
-
-    printf("Blinking pin %d at %d Hz\n", pin, freq);
 
     // PIO counter program takes 3 more cycles in total than we pass as
     // input (wait for n + 1; mov; jmp)
@@ -78,12 +82,13 @@ StepperDrive stepperDrive;
 
 // Core engine
 Core core(&encoder, &stepperDrive);
+CoreProxy coreProxy;
 
-// User interface
-UserInterface userInterface(&controlPanel, &core, &feedTableFactory);
 
-repeating_timer core_timer;
 
+repeating_timer core_motion_timer;
+repeating_timer core1_timer;
+repeating_timer coreproxy_timer;
 
 int main()
 {
@@ -98,14 +103,12 @@ int main()
     // Initialize peripherals and pins
     spiBus.initHardware();  
     controlPanel.initHardware();
-    stepperDrive.initHardware();
-    encoder.initHardware();    
 
-    add_repeating_timer_us(STEPPER_CYCLE_US, core_timer_callback, NULL, &core_timer);
+    add_repeating_timer_us(500, pollcorestatus_timer_callback, NULL, &coreproxy_timer);    
 
     while (true) {
         // check for step backlog and panic the system if it occurs
-        if( stepperDrive.checkStepBacklog() ) {
+        if( stepperDrive.checkStepBacklog() ) { // TODO: do this check on core1, this isn't safe
             userInterface.panicStepBacklog();
         }
 
@@ -117,8 +120,32 @@ int main()
     }
 }
 
-bool core_timer_callback( repeating_timer *rt )
+void core1_entry(void)
+{
+    stepperDrive.initHardware();
+    encoder.initHardware(); 
+    add_repeating_timer_us(1000, core1_timer_callback, NULL, &core1_timer);
+    add_repeating_timer_us(STEPPER_CYCLE_US, core_motion_timer_callback, NULL, &core_motion_timer);
+
+    while(true) {
+
+    }
+}
+
+bool core1_timer_callback( repeating_timer *rt )
+{
+    core.pollStatus();
+    core.checkQueues();
+    return true;
+}
+
+bool core_motion_timer_callback( repeating_timer *rt )
 {
     core.ISR();
+    return true;
+}
+
+bool pollcorestatus_timer_callback( repeating_timer *rt) {
+    coreProxy.checkStatus();
     return true;
 }

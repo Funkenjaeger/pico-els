@@ -74,7 +74,7 @@ const MESSAGE BACKLOG_PANIC_MESSAGE_2 =
 
 const uint16_t VALUE_BLANK[4] = { BLANK, BLANK, BLANK, BLANK };
 
-UserInterface :: UserInterface(ControlPanel *controlPanel, Core *core, FeedTableFactory *feedTableFactory)
+UserInterface :: UserInterface(ControlPanel *controlPanel, CoreProxy *core, FeedTableFactory *feedTableFactory)
 {
     this->controlPanel = controlPanel;
     this->core = core;
@@ -193,7 +193,7 @@ void UserInterface :: loop( void )
             if( keys.bit.FWD_REV )
             {
                 this->reverse = ! this->reverse;
-                core->setReverse(this->reverse);
+                core->setReverse(this->reverse); // TODO: DEBUG - fwd/rev doesn't appear to be working
             }
             if( keys.bit.SET )
             {

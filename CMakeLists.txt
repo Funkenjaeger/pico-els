@@ -70,9 +70,12 @@ add_library(core INTERFACE)
 target_sources(core INTERFACE ${CMAKE_CURRENT_LIST_DIR}/Core.cpp)
 add_library(ui INTERFACE)
 target_sources(ui INTERFACE ${CMAKE_CURRENT_LIST_DIR}/UserInterface.cpp)
+add_library(multicore INTERFACE)
+target_sources(ui INTERFACE ${CMAKE_CURRENT_LIST_DIR}/multicore.cpp)
 
 # Add any user requested libraries
 target_link_libraries(pico-els 
+        pico_multicore
         hardware_spi
         hardware_i2c
         hardware_pio
@@ -83,6 +86,7 @@ target_link_libraries(pico-els
         pico_controlpanel
         pico_stepperdrive
         feedtable
+        multicore
         core
         ui)
 

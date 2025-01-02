@@ -31,44 +31,52 @@
 #include "Core.h"
 
 
-
 Core :: Core( Encoder *encoder, StepperDrive *stepperDrive )
 {
     this->encoder = encoder;
     this->stepperDrive = stepperDrive;
 
-    this->feed = NULL_FEED;
-    this->feedDirection = 0;
+    feed = NULL_FEED;
+    feedDirection = 0;
 
-    this->previousSpindlePosition = 0;
-    this->previousFeedDirection = 0;
-    this->previousFeed = NULL_FEED;
+    previousSpindlePosition = 0;
+    previousFeedDirection = 0;
+    previousFeed = NULL_FEED;
 
-    this->powerOn = true; // default to power on
+    setPowerOn(true); // default to power on
 }
 
 void Core :: setReverse(bool reverse)
 {
-    if( reverse )
-    {
-        this->feedDirection = -1;
-    }
-    else
-    {
-        this->feedDirection = 1;
-    }
+    feedDirection = reverse ? -1 : 1;
 }
 
 void Core :: setPowerOn(bool powerOn)
 {
-    this->powerOn = powerOn;
-    this->stepperDrive->setEnabled(powerOn);
+    status.powerOn = powerOn;
+    stepperDrive->setEnabled(powerOn);
+}
+
+void Core :: checkQueues( void ) {
+    bool cmdVal, rv;
+    rv = queue_try_remove(&poweron_queue, &cmdVal);
+    if(rv) {
+        setPowerOn(cmdVal);
+    }
+    rv = queue_try_remove(&reverse_queue, &cmdVal);
+    if(rv) {
+        setReverse(cmdVal);
+    }
+    float feedVal;
+    rv = queue_try_remove(&feed_queue, &feedVal);
+    if(rv) {
+        setFeed(feedVal);
+    }
 }
 
 void Core :: ISR( void )
 {
-    
-    if( this->feed != NULL_FEED ) {
+    if( feed != NULL_FEED ) {
         // read the encoder
         int32_t spindlePosition = encoder->getPosition();
 
