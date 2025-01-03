@@ -77,12 +77,12 @@ private:
     //
     // Current position of the motor, in steps
     //
-    //int32_t currentPosition;
+    int32_t currentPosition;
 
     //
     // Desired position of the motor, in steps
     //
-    //int32_t desiredPosition;
+    int32_t desiredPosition;
 
     //
     // current state-machine state
@@ -97,10 +97,6 @@ private:
     bool enabled;
 
 public:
-
-    int32_t currentPosition; // DEBUG
-    int32_t desiredPosition; // DEBUG
-
     StepperDrive();
     void initHardware(void);
 
@@ -144,19 +140,13 @@ inline bool StepperDrive :: checkStepBacklog()
 inline void StepperDrive :: setEnabled(bool enabled)
 {
     this->enabled = enabled;
-    if( this->enabled ) {
-        GPIO_SET_ENABLE;
-    }
-    else
-    {
-        GPIO_CLEAR_ENABLE;
-    }
+    gpio_put(STEPPER_ENABLE_PIN, enabled);
 }
 
 inline bool StepperDrive :: isAlarm()
 {
 #ifdef USE_ALARM_PIN
-    return GPIO_GET_ALARM;
+    return gpio_get(STEPPER_ALARM_PIN);
 #else
     return false;
 #endif

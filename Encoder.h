@@ -36,13 +36,13 @@
 #include "quadrature.pio.h"
 #include "pico/stdlib.h"
 
-#define _ENCODER_MAX_COUNT 0x00ffffff
+#define _ENCODER_MAX_COUNT UINT32_MAX
 #define _ENCODER_RPM_CALC_HZ 10
 
 class Encoder
 {
 private:
-    uint32_t previous;
+    int32_t previous;
     uint16_t rpm;
     PIO pio;
     uint32_t pio_offset;
@@ -55,7 +55,7 @@ public:
     void initHardware( void );
 
     uint16_t getRPM( void );
-    uint32_t getPosition( void );
+    int32_t getPosition( void );
     uint32_t getMaxCount( void );
 };
 

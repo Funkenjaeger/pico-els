@@ -37,7 +37,13 @@
 #include "ControlPanel.h"
 #include "Tables.h"
 
-//#define USE_FLOATING_POINT
+#define USE_FLOATING_POINT
+
+#ifdef USE_FLOATING_POINT
+    #define NULL_FEED 0.0
+#else
+    #define NULL_FEED NULL
+#endif
 
 
 class Core
@@ -57,9 +63,9 @@ private:
     int16_t feedDirection;
     int16_t previousFeedDirection;
 
-    uint32_t previousSpindlePosition;
+    int32_t previousSpindlePosition;
 
-    int32_t feedRatio(uint32_t count);
+    int32_t feedRatio(int32_t count);
 
     bool powerOn;
 
@@ -101,47 +107,13 @@ inline bool Core :: isPowerOn()
     return this->powerOn;
 }
 
-inline int32_t Core :: feedRatio(uint32_t count)
+inline int32_t Core :: feedRatio(int32_t count)
 {
 #ifdef USE_FLOATING_POINT
     return ((float)count) * this->feed * feedDirection;
 #else // USE_FLOATING_POINT
-    return (int32_t)(((int64_t)count) * feed->numerator / feed->denominator * feedDirection);
+    return ((int64_t)count * (int64_t)(feed->numerator) / (int64_t)(feed->denominator)) * feedDirection;
 #endif // USE_FLOATING_POINT
 }
-
-inline void Core :: ISR( void )
-{
-    if( this->feed != NULL ) {
-        // read the encoder
-        uint32_t spindlePosition = encoder->getPosition();
-
-        // calculate the desired stepper position
-        int32_t desiredSteps = feedRatio(spindlePosition);
-        stepperDrive->setDesiredPosition(desiredSteps);
-
-        // compensate for encoder overflow/underflow
-        if( spindlePosition < previousSpindlePosition && previousSpindlePosition - spindlePosition > encoder->getMaxCount()/2 ) {
-            stepperDrive->incrementCurrentPosition(-1 * feedRatio(encoder->getMaxCount()));
-        }
-        if( spindlePosition > previousSpindlePosition && spindlePosition - previousSpindlePosition > encoder->getMaxCount()/2 ) {
-            stepperDrive->incrementCurrentPosition(feedRatio(encoder->getMaxCount()));
-        }
-
-        // if the feed or direction changed, reset sync to avoid a big step
-        if( feed != previousFeed || feedDirection != previousFeedDirection) {
-            stepperDrive->setCurrentPosition(desiredSteps);
-        }
-
-        // remember values for next time
-        previousSpindlePosition = spindlePosition;
-        previousFeedDirection = feedDirection;
-        previousFeed = feed;
-
-        // service the stepper drive state machine
-        stepperDrive->ISR();
-    }
-}
-
 
 #endif // __CORE_H

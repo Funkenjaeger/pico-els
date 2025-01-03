@@ -32,7 +32,6 @@
 #include <cmath>
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
-#include "hardware/uart.h"
 
 //#include "SanityCheck.h"
 #include "ControlPanel.h"
@@ -55,16 +54,6 @@ void blink_pin_forever(PIO pio, uint sm, uint offset, uint pin, uint freq) {
     // input (wait for n + 1; mov; jmp)
     pio->txf[sm] = (125000000 / (2 * freq)) - 3;
 }
-
-// UART defines
-// By default the stdout UART is `uart0`, so we will use the second one
-#define UART_ID uart1
-#define BAUD_RATE 115200
-
-// Use pins 4 and 5 for UART1
-// Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
-#define UART_TX_PIN 4
-#define UART_RX_PIN 5
 
 //
 // DEPENDENCY INJECTION
@@ -100,26 +89,11 @@ int main()
 {
     stdio_init_all();
 
-    // PIO Blinking example
+    // PIO Blink
     PIO pio = pio0;
     uint offset = pio_add_program(pio, &blink_program);
-    int32_t pio_sm = pio_claim_unused_sm(pio, true);
-    printf("Loaded program at %d\n", offset);
-    
+    int32_t pio_sm = pio_claim_unused_sm(pio, true);    
     blink_pin_forever(pio, pio_sm, offset, PICO_DEFAULT_LED_PIN, 3);
-
-    // Set up our UART
-    uart_init(UART_ID, BAUD_RATE);
-    // Set the TX and RX pins by using the function select on the GPIO
-    // Set datasheet for more information on function select
-    gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
-    gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
-    
-    // Use some the various UART functions to send out data
-    // In a default system, printf will also output via the default UART
-    
-    // Send out a string, with CR/LF conversions
-    uart_puts(UART_ID, " Hello, UART!\n");
 
     // Initialize peripherals and pins
     spiBus.initHardware();  
@@ -129,20 +103,11 @@ int main()
 
     add_repeating_timer_us(STEPPER_CYCLE_US, core_timer_callback, NULL, &core_timer);
 
-    int i = 0;
-
     while (true) {
-        if(++i > UI_REFRESH_RATE_HZ)
-        {
-            //printf("Hello, world!\n");
-            printf("%lu counts, %ld steps, %ld backlog\n", encoder.getPosition(), stepperDrive.currentPosition, abs(stepperDrive.desiredPosition - stepperDrive.currentPosition));
-            i=0;
-        }
-
         // check for step backlog and panic the system if it occurs
-        /*if( stepperDrive.checkStepBacklog() ) {
+        if( stepperDrive.checkStepBacklog() ) {
             userInterface.panicStepBacklog();
-        }*/
+        }
 
         // service the user interface
         userInterface.loop();

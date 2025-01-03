@@ -37,12 +37,12 @@ Core :: Core( Encoder *encoder, StepperDrive *stepperDrive )
     this->encoder = encoder;
     this->stepperDrive = stepperDrive;
 
-    this->feed = NULL;
+    this->feed = NULL_FEED;
     this->feedDirection = 0;
 
     this->previousSpindlePosition = 0;
     this->previousFeedDirection = 0;
-    this->previousFeed = NULL;
+    this->previousFeed = NULL_FEED;
 
     this->powerOn = true; // default to power on
 }
@@ -65,8 +65,36 @@ void Core :: setPowerOn(bool powerOn)
     this->stepperDrive->setEnabled(powerOn);
 }
 
+void Core :: ISR( void )
+{
+    
+    if( this->feed != NULL_FEED ) {
+        // read the encoder
+        int32_t spindlePosition = encoder->getPosition();
 
+        // calculate the desired stepper position
+        int32_t desiredSteps = feedRatio(spindlePosition);
+        stepperDrive->setDesiredPosition(desiredSteps);
 
+        // compensate for encoder overflow/underflow
+        if( spindlePosition < previousSpindlePosition && previousSpindlePosition - spindlePosition > encoder->getMaxCount()/2 ) {
+            stepperDrive->incrementCurrentPosition(-1 * feedRatio(encoder->getMaxCount()));
+        }
+        if( spindlePosition > previousSpindlePosition && spindlePosition - previousSpindlePosition > encoder->getMaxCount()/2 ) {
+            stepperDrive->incrementCurrentPosition(feedRatio(encoder->getMaxCount()));
+        }
 
+        // if the feed or direction changed, reset sync to avoid a big step
+        if( feed != previousFeed || feedDirection != previousFeedDirection) {
+            stepperDrive->setCurrentPosition(desiredSteps);
+        }
 
+        // remember values for next time
+        previousSpindlePosition = spindlePosition;
+        previousFeedDirection = feedDirection;
+        previousFeed = feed;
 
+        // service the stepper drive state machine
+        stepperDrive->ISR();
+    }
+}

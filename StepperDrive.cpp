@@ -36,13 +36,13 @@ StepperDrive :: StepperDrive(void)
     //
     // Set up global state variables
     //
-    this->currentPosition = 0;
-    this->desiredPosition = 0;
+    currentPosition = 0;
+    desiredPosition = 0;
 
     //
     // State machine starts at state zero
     //
-    this->state = 0;
+    state = 0;
 }
 
 void StepperDrive :: initHardware(void)

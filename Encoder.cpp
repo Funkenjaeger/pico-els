@@ -51,16 +51,17 @@ void Encoder :: initHardware(void)
     add_repeating_timer_us(1e6/_ENCODER_RPM_CALC_HZ, encoder_timer_callback, this, &timer);
 }
 
-uint32_t Encoder :: getPosition(void)
+int32_t Encoder :: getPosition(void)
 {
     pio_sm_exec_wait_blocking(pio, pio_sm, pio_encode_in(pio_x, 32));
-    return pio_sm_get_blocking(pio, pio_sm);
+    //return static_cast<int32_t>(pio_sm_get_blocking(pio, pio_sm));
+    return (int32_t)pio_sm_get_blocking(pio, pio_sm);
 }
 
 bool encoder_timer_callback(repeating_timer *rt)
 {
     Encoder * encoder = static_cast<Encoder *>(rt->user_data);
-    uint32_t position = encoder->getPosition();
+    int32_t position = encoder->getPosition();
 
     encoder->rpm = uint16_t(abs(position - encoder->previous) * _ENCODER_RPM_CALC_HZ * 60 / ENCODER_RESOLUTION);
 
