@@ -36,11 +36,13 @@ CoreProxy :: CoreProxy ( void ) {
 
 void CoreProxy :: setFeed(const FEED_THREAD *feed) {
     float _feed = (float)feed->numerator / (float) feed->denominator;
-    queue_add_blocking(&feed_queue, &_feed);
+    queue_try_add(&feed_queue, &_feed);
+    multicore_doorbell_set_other_core(doorbell_core_command);
 }
 
 void CoreProxy :: setReverse(bool reverse) {
-    queue_add_blocking(&reverse_queue, &reverse);
+    queue_try_add(&reverse_queue, &reverse);
+    multicore_doorbell_set_other_core(doorbell_core_command);
 }
 
 uint16_t CoreProxy :: getRPM(void) {
@@ -56,7 +58,8 @@ bool CoreProxy :: isPowerOn(void) {
 }
 
 void CoreProxy :: setPowerOn(bool state) {
-    queue_add_blocking(&poweron_queue, &state);
+    queue_try_add(&poweron_queue, &state);
+    multicore_doorbell_set_other_core(doorbell_core_command);
 }
 
 void CoreProxy :: checkStatus(void) {

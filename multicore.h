@@ -35,6 +35,7 @@ extern queue_t feed_queue;
 extern queue_t poweron_queue;
 extern queue_t reverse_queue;
 extern queue_t corestatus_queue;
+extern int doorbell_core_command;
 
 class CoreProxy
 {

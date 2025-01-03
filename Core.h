@@ -46,9 +46,11 @@ typedef struct {
     float rpm;
 } corestatus_t;
 
-extern queue_t feed_queue;
-extern queue_t corestatus_queue;
-extern queue_t poweron_queue;
+extern queue_t feed_queue; // TODO: maybe pass this into constructor instead
+extern queue_t corestatus_queue; // TODO: maybe pass this into constructor instead
+extern queue_t poweron_queue; // TODO: maybe pass this into constructor instead
+//extern int doorbell_core_command; // TODO: maybe pass this into constructor instead
+extern int doorbell_core_status; // TODO: maybe pass this into constructor instead
 
 class Core
 {
@@ -91,7 +93,8 @@ inline void Core :: pollStatus( void )
 {
     status.rpm = encoder->getRPM();
     status.isAlarm = stepperDrive->isAlarm();
-    queue_add_blocking(&corestatus_queue, &status);
+    bool rv = queue_try_add(&corestatus_queue, &status);
+    multicore_doorbell_set_other_core(doorbell_core_status);
 }
 
 inline int32_t Core :: feedRatio(int32_t count)
