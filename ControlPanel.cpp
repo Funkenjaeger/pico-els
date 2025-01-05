@@ -190,10 +190,10 @@ bool ControlPanel :: isValidKeyState(KEY_REG testKeys) {
     switch(testKeys.all) {
     case 0:
     case 1 << 0:
+    case 1 << 1:
     case 1 << 2:
     case 1 << 3:
     case 1 << 4:
-    case 1 << 5:
     case 1 << 6:
     case 1 << 7:
         return true;
