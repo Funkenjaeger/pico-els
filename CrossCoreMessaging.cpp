@@ -5,10 +5,6 @@
 //
 // Copyright (c) 2025 Evan Dudzik
 //
-// This software is based on the Clough42 Electronic Leadscrew project under the MIT license
-// https://github.com/clough42/electronic-leadscrew
-// Leveraged portions of this software are Copyright (c) 2019 James Clough
-//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -27,53 +23,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "CrossCoreMessaging.h"
 
-#ifndef __USERINTERFACE_H
-#define __USERINTERFACE_H
+CrossCoreMessaging :: CrossCoreMessaging( void ) {
+    // Set up queues & doorbells for interfacing between cores
+    queue_init(&feed_queue, sizeof(float), 4);
+    queue_init(&poweron_queue, sizeof(bool), 4);
+    queue_init(&reverse_queue, sizeof(bool), 4);
+    queue_init(&corestatus_queue, sizeof(corestatus_t), 4);    
+    doorbell_core_command = multicore_doorbell_claim_unused((1 << NUM_CORES) - 1, true);
+    doorbell_core_status = multicore_doorbell_claim_unused((1 << NUM_CORES) - 1, true);
+}
 
-#include <cstdint>
-#include "ControlPanel.h"
-#include "Core.h"
-#include "Tables.h"
-#include "CoreProxy.h"
-
-typedef struct MESSAGE
-{
-    uint8_t message[8];
-    uint16_t displayTime;
-    const MESSAGE *next;
-} MESSAGE;
-
-class UserInterface
-{
-private:
-    ControlPanel *controlPanel;
-    Core *core;
-    FeedTableFactory *feedTableFactory;
-
-    bool metric;
-    bool thread;
-    bool reverse;
-
-    FeedTable *feedTable;
-
-    KEY_REG keys;
-
-    const MESSAGE *message;
-    uint16_t messageTime;
-
-    const FEED_THREAD *loadFeedTable();
-    LED_REG calculateLEDs();
-    void setMessage(const MESSAGE *message);
-    void overrideMessage( void );
-    void clearMessage( void );
-
-public:
-    UserInterface(ControlPanel *controlPanel, Core *core, FeedTableFactory *feedTableFactory);
-
-    void loop( void );
-
-    void panicStepBacklog( void );
-};
-
-#endif // __USERINTERFACE_H
+bool CrossCoreMessaging :: checkCoreStatus( float *rpm, bool *isAlarm, bool *powerOn, bool *isPanic ) {
+    
+    corestatus_t coreStatus;
+    if(queue_try_remove(&corestatus_queue, &coreStatus)) {
+        *rpm = coreStatus.rpm;
+        *isAlarm = coreStatus.isAlarm;
+        *powerOn = coreStatus.powerOn;
+        *isPanic = coreStatus.isPanic;
+        if (queue_is_empty(&corestatus_queue)) {
+            multicore_doorbell_clear_current_core(doorbell_core_status);
+        }
+        return true;
+    } else {
+        return false;
+    }
+}

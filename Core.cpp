@@ -27,47 +27,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
 #include "Core.h"
-
-
 
 Core :: Core( Encoder *encoder, StepperDrive *stepperDrive )
 {
     this->encoder = encoder;
     this->stepperDrive = stepperDrive;
 
-    this->feed = NULL_FEED;
-    this->feedDirection = 0;
+    feed = NULL_FEED;
+    feedDirection = 0;
 
-    this->previousSpindlePosition = 0;
-    this->previousFeedDirection = 0;
-    this->previousFeed = NULL_FEED;
+    previousSpindlePosition = 0;
+    previousFeedDirection = 0;
+    previousFeed = NULL_FEED;
 
-    this->powerOn = true; // default to power on
+    setPowerOn(true); // default to power on
+}
+
+Core :: Core(void) {
+    
 }
 
 void Core :: setReverse(bool reverse)
 {
-    if( reverse )
-    {
-        this->feedDirection = -1;
-    }
-    else
-    {
-        this->feedDirection = 1;
-    }
+    feedDirection = reverse ? -1 : 1;
 }
 
 void Core :: setPowerOn(bool powerOn)
 {
     this->powerOn = powerOn;
-    this->stepperDrive->setEnabled(powerOn);
+    stepperDrive->setEnabled(powerOn);
 }
 
 void Core :: ISR( void )
 {
-    
     if( this->feed != NULL_FEED && !stepperDrive->busy()) {
         // read the encoder
         int32_t spindlePosition = encoder->getPosition();

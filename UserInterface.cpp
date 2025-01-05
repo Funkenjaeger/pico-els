@@ -106,7 +106,7 @@ LED_REG UserInterface::calculateLEDs()
     // get the LEDs for this feed
     LED_REG leds = feedTable->current()->leds;
 
-    if( this->core->isPowerOn() )
+    if( this->core->getIsPowerOn() )
     {
         // and add a few of our own
         leds.bit.POWER = 1;
@@ -174,12 +174,12 @@ void UserInterface :: loop( void )
     {
         // these keys should only be sensitive when the machine is stopped
         if( keys.bit.POWER ) {
-            this->core->setPowerOn(!this->core->isPowerOn());
+            this->core->setPowerOn(!this->core->getIsPowerOn());
             clearMessage();
         }
 
         // these should only work when the power is on
-        if( this->core->isPowerOn() ) {
+        if( this->core->getIsPowerOn() ) {
             if( keys.bit.IN_MM )
             {
                 this->metric = ! this->metric;
@@ -193,7 +193,7 @@ void UserInterface :: loop( void )
             if( keys.bit.FWD_REV )
             {
                 this->reverse = ! this->reverse;
-                core->setReverse(this->reverse);
+                core->setReverse(this->reverse); // TODO: DEBUG - fwd/rev doesn't appear to be working
             }
             if( keys.bit.SET )
             {
@@ -208,7 +208,7 @@ void UserInterface :: loop( void )
 #endif // IGNORE_ALL_KEYS_WHEN_RUNNING
 
         // these should only work when the power is on
-        if( this->core->isPowerOn() ) {
+        if( this->core->getIsPowerOn() ) {
             // these keys can be operated when the machine is running
             if( keys.bit.UP )
             {
@@ -229,7 +229,7 @@ void UserInterface :: loop( void )
     controlPanel->setValue(feedTable->current()->display);
     controlPanel->setRPM(currentRpm);
 
-    if( ! core->isPowerOn() )
+    if( ! core->getIsPowerOn() )
     {
         controlPanel->setValue(VALUE_BLANK);
     }

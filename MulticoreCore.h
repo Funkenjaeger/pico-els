@@ -5,10 +5,6 @@
 //
 // Copyright (c) 2025 Evan Dudzik
 //
-// This software is based on the Clough42 Electronic Leadscrew project under the MIT license
-// https://github.com/clough42/electronic-leadscrew
-// Leveraged portions of this software are Copyright (c) 2019 James Clough
-//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -27,53 +23,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#ifndef __MULTICORECORE_H
+#define __MULTICORECORE_H
 
-#ifndef __USERINTERFACE_H
-#define __USERINTERFACE_H
-
-#include <cstdint>
-#include "ControlPanel.h"
+#include "pico/stdlib.h"
+#include "pico/util/queue.h"
+#include "pico/multicore.h"
 #include "Core.h"
-#include "Tables.h"
-#include "CoreProxy.h"
+#include "CrossCoreMessaging.h"
 
-typedef struct MESSAGE
-{
-    uint8_t message[8];
-    uint16_t displayTime;
-    const MESSAGE *next;
-} MESSAGE;
-
-class UserInterface
-{
+class MulticoreCore : public Core {
 private:
-    ControlPanel *controlPanel;
-    Core *core;
-    FeedTableFactory *feedTableFactory;
-
-    bool metric;
-    bool thread;
-    bool reverse;
-
-    FeedTable *feedTable;
-
-    KEY_REG keys;
-
-    const MESSAGE *message;
-    uint16_t messageTime;
-
-    const FEED_THREAD *loadFeedTable();
-    LED_REG calculateLEDs();
-    void setMessage(const MESSAGE *message);
-    void overrideMessage( void );
-    void clearMessage( void );
-
+    CrossCoreMessaging *xCore;
+    
 public:
-    UserInterface(ControlPanel *controlPanel, Core *core, FeedTableFactory *feedTableFactory);
-
-    void loop( void );
-
-    void panicStepBacklog( void );
+    MulticoreCore(Encoder*, StepperDrive*, CrossCoreMessaging*);
+    void pollStatus(void);
+    void checkQueues(void);
 };
 
-#endif // __USERINTERFACE_H
+#endif

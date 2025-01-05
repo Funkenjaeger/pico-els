@@ -5,10 +5,6 @@
 //
 // Copyright (c) 2025 Evan Dudzik
 //
-// This software is based on the Clough42 Electronic Leadscrew project under the MIT license
-// https://github.com/clough42/electronic-leadscrew
-// Leveraged portions of this software are Copyright (c) 2019 James Clough
-//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -27,53 +23,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
-#ifndef __USERINTERFACE_H
-#define __USERINTERFACE_H
-
-#include <cstdint>
-#include "ControlPanel.h"
-#include "Core.h"
-#include "Tables.h"
 #include "CoreProxy.h"
 
-typedef struct MESSAGE
-{
-    uint8_t message[8];
-    uint16_t displayTime;
-    const MESSAGE *next;
-} MESSAGE;
+CoreProxy :: CoreProxy ( CrossCoreMessaging* xCore ) {
+    this-> xCore = xCore;
+    isAlarm = false;
+    isPanic = false;
+}
 
-class UserInterface
-{
-private:
-    ControlPanel *controlPanel;
-    Core *core;
-    FeedTableFactory *feedTableFactory;
+void CoreProxy :: setFeed(const FEED_THREAD *feed) {
+    float _feed = (float)feed->numerator / (float) feed->denominator;
+    queue_try_add(&xCore->feed_queue, &_feed);
+    multicore_doorbell_set_other_core(xCore->doorbell_core_command);
+}
 
-    bool metric;
-    bool thread;
-    bool reverse;
+void CoreProxy :: setReverse(bool reverse) {
+    queue_try_add(&xCore->reverse_queue, &reverse);
+    multicore_doorbell_set_other_core(xCore->doorbell_core_command);
+}
 
-    FeedTable *feedTable;
-
-    KEY_REG keys;
-
-    const MESSAGE *message;
-    uint16_t messageTime;
-
-    const FEED_THREAD *loadFeedTable();
-    LED_REG calculateLEDs();
-    void setMessage(const MESSAGE *message);
-    void overrideMessage( void );
-    void clearMessage( void );
-
-public:
-    UserInterface(ControlPanel *controlPanel, Core *core, FeedTableFactory *feedTableFactory);
-
-    void loop( void );
-
-    void panicStepBacklog( void );
-};
-
-#endif // __USERINTERFACE_H
+void CoreProxy :: setPowerOn(bool state) {
+    queue_try_add(&xCore->poweron_queue, &state);
+    multicore_doorbell_set_other_core(xCore->doorbell_core_command);
+}
