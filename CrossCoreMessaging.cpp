@@ -23,50 +23,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "multicore.h"
+#include "CrossCoreMessaging.h"
 
-queue_t feed_queue;
-queue_t poweron_queue;
-queue_t reverse_queue;
-queue_t corestatus_queue;
-
-CoreProxy :: CoreProxy ( void ) {
-
+CrossCoreMessaging :: CrossCoreMessaging( void ) {
+    // Set up queues & doorbells for interfacing between cores
+    queue_init(&feed_queue, sizeof(float), 4);
+    queue_init(&poweron_queue, sizeof(bool), 4);
+    queue_init(&reverse_queue, sizeof(bool), 4);
+    queue_init(&corestatus_queue, sizeof(corestatus_t), 4);    
+    doorbell_core_command = multicore_doorbell_claim_unused((1 << NUM_CORES) - 1, true);
+    doorbell_core_status = multicore_doorbell_claim_unused((1 << NUM_CORES) - 1, true);
 }
 
-void CoreProxy :: setFeed(const FEED_THREAD *feed) {
-    float _feed = (float)feed->numerator / (float) feed->denominator;
-    queue_try_add(&feed_queue, &_feed);
-    multicore_doorbell_set_other_core(doorbell_core_command);
-}
-
-void CoreProxy :: setReverse(bool reverse) {
-    queue_try_add(&reverse_queue, &reverse);
-    multicore_doorbell_set_other_core(doorbell_core_command);
-}
-
-uint16_t CoreProxy :: getRPM(void) {
-    return _rpm;
-}
-
-bool CoreProxy :: isAlarm(void) {
-    return _isAlarm;
-}
-
-bool CoreProxy :: isPowerOn(void) {
-    return _powerOn;
-}
-
-void CoreProxy :: setPowerOn(bool state) {
-    queue_try_add(&poweron_queue, &state);
-    multicore_doorbell_set_other_core(doorbell_core_command);
-}
-
-void CoreProxy :: checkStatus(void) {
-    corestatus_t entry;
-    if(queue_try_remove(&corestatus_queue, &entry)) {
-        _rpm = entry.rpm;
-        _isAlarm = entry.isAlarm;
-        _powerOn = entry.powerOn;
+bool CrossCoreMessaging :: checkCoreStatus( float *rpm, bool *isAlarm, bool *powerOn, bool *isPanic ) {
+    
+    corestatus_t coreStatus;
+    if(queue_try_remove(&corestatus_queue, &coreStatus)) {
+        *rpm = coreStatus.rpm;
+        *isAlarm = coreStatus.isAlarm;
+        *powerOn = coreStatus.powerOn;
+        *isPanic = coreStatus.isPanic;
+        if (queue_is_empty(&corestatus_queue)) {
+            multicore_doorbell_clear_current_core(doorbell_core_status);
+        }
+        return true;
+    } else {
+        return false;
     }
 }

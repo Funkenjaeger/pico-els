@@ -27,9 +27,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
 #include "Core.h"
-
 
 Core :: Core( Encoder *encoder, StepperDrive *stepperDrive )
 {
@@ -46,6 +44,10 @@ Core :: Core( Encoder *encoder, StepperDrive *stepperDrive )
     setPowerOn(true); // default to power on
 }
 
+Core :: Core(void) {
+    
+}
+
 void Core :: setReverse(bool reverse)
 {
     feedDirection = reverse ? -1 : 1;
@@ -53,25 +55,8 @@ void Core :: setReverse(bool reverse)
 
 void Core :: setPowerOn(bool powerOn)
 {
-    status.powerOn = powerOn;
+    this->powerOn = powerOn;
     stepperDrive->setEnabled(powerOn);
-}
-
-void Core :: checkQueues( void ) {
-    bool cmdVal, rv;
-    rv = queue_try_remove(&poweron_queue, &cmdVal);
-    if(rv) {
-        setPowerOn(cmdVal);
-    }
-    rv = queue_try_remove(&reverse_queue, &cmdVal);
-    if(rv) {
-        setReverse(cmdVal);
-    }
-    float feedVal;
-    rv = queue_try_remove(&feed_queue, &feedVal);
-    if(rv) {
-        setFeed(feedVal);
-    }
 }
 
 void Core :: ISR( void )

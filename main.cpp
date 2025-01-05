@@ -27,6 +27,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#define USE_MULTICORE
+
 #include <stdio.h>
 #include <cstdint>
 #include <cmath>
@@ -40,20 +42,29 @@
 #include "Encoder.h"
 #include "Core.h"
 #include "UserInterface.h"
-#include "multicore.h"
+#ifdef USE_MULTICORE
+#include "CoreProxy.h"
+#include "CrossCoreMessaging.h"
+#include "MulticoreCore.h"
+#endif
 
 #include "blink.pio.h"
 
+#ifdef USE_MULTICORE
 bool core1_core_motion_timer_callback( repeating_timer*);
 bool core1_status_timer_callback( repeating_timer*);
 bool pollcorestatus_timer_callback( repeating_timer*);
 void core1_entry(void);
 
-int doorbell_core_status;
-int doorbell_core_command;
-
 void doorbell_core0_isr(void);
 void doorbell_core1_isr(void);
+
+repeating_timer core1_core_motion_timer;
+repeating_timer core1_status_timer;
+#else
+bool core_motion_timer_callback( repeating_timer*);
+repeating_timer core_motion_timer;
+#endif
 
 void blink_pin_forever(PIO pio, uint sm, uint offset, uint pin, uint freq) {
     blink_program_init(pio, sm, offset, pin);
@@ -85,15 +96,18 @@ Encoder* encoder;
 // Stepper driver
 StepperDrive* stepperDrive;
 
+#ifdef USE_MULTICORE
+CrossCoreMessaging* xCore;
+// Core engine
+MulticoreCore* core;
+CoreProxy* coreProxy;
+#else
 // Core engine
 Core* core;
-CoreProxy* coreProxy;
+#endif
 
 // User Interface
 UserInterface* userInterface;
-
-repeating_timer core1_core_motion_timer;
-repeating_timer core1_status_timer;
 
 int main()
 {
@@ -105,19 +119,16 @@ int main()
     int32_t pio_sm = pio_claim_unused_sm(pio, true);    
     blink_pin_forever(pio, pio_sm, offset, PICO_DEFAULT_LED_PIN, 3);
 
-    // Set up queues & doorbells for interfacing between cores
-    queue_init(&feed_queue, sizeof(float), 2);
-    queue_init(&poweron_queue, sizeof(bool), 2);
-    queue_init(&reverse_queue, sizeof(bool), 2);
-    queue_init(&corestatus_queue, sizeof(corestatus_t), 2);    
-    doorbell_core_command = multicore_doorbell_claim_unused((1 << NUM_CORES) - 1, true);
-    doorbell_core_status = multicore_doorbell_claim_unused((1 << NUM_CORES) - 1, true);
+    #ifdef USE_MULTICORE
+    xCore = new CrossCoreMessaging();
 
     // Set up doorbell interrupt handlers
-    uint32_t irq = multicore_doorbell_irq_num(doorbell_core_status);
+    uint32_t irq = xCore->getDoorbellIrqNum();
     irq_add_shared_handler(irq, doorbell_core0_isr, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY );
     irq_add_shared_handler(irq, doorbell_core1_isr, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY );
-    irq_set_enabled(irq, true);  
+    // Unmask doorbell IRQ in Core 0
+    irq_set_enabled(irq, true); 
+    #endif    
 
     // Instantiate objects
     feedTableFactory = new FeedTableFactory();
@@ -125,9 +136,15 @@ int main()
     controlPanel = new ControlPanel(spiBus);
     encoder = new Encoder();
     stepperDrive = new StepperDrive();
-    core = new Core(encoder, stepperDrive);
-    coreProxy = new CoreProxy();
+
+    #ifdef USE_MULTICORE
+    core = new MulticoreCore(encoder, stepperDrive, xCore);
+    coreProxy = new CoreProxy(xCore);
     userInterface = new UserInterface(controlPanel, coreProxy, feedTableFactory);
+    #else
+    core = new Core(encoder, stepperDrive);
+    userInterface = new UserInterface(controlPanel, core, feedTableFactory);
+    #endif    
 
     // Initialize peripherals and pins
     stepperDrive->initHardware();  
@@ -135,11 +152,17 @@ int main()
     spiBus->initHardware();  
     controlPanel->initHardware(); 
 
+    #ifdef USE_MULTICORE
     multicore_launch_core1(core1_entry);  
+    #else
+    add_repeating_timer_us(STEPPER_CYCLE_US, core_motion_timer_callback, NULL, &core_motion_timer);
+    #endif
+
+    printf("Initialized...\n");
 
     while (true) {
         // check for step backlog and panic the system if it occurs
-        if( stepperDrive->checkStepBacklog() ) { // TODO: do this check on core1, this isn't safe
+        if( coreProxy->getIsPanic() ) {
             userInterface->panicStepBacklog();
         }
 
@@ -151,6 +174,7 @@ int main()
     }
 }
 
+#ifdef USE_MULTICORE
 void core1_entry(void)
 {   
     // Create alarm pool for Core 1 (default alarm pool always interrupts Core 0)
@@ -158,9 +182,8 @@ void core1_entry(void)
     alarm_pool_add_repeating_timer_us(core1_alarm_pool, 1000, core1_status_timer_callback, NULL, &core1_status_timer);
     alarm_pool_add_repeating_timer_us(core1_alarm_pool, STEPPER_CYCLE_US, core1_core_motion_timer_callback, NULL, &core1_core_motion_timer);  
 
-    // Unmask core1 doorbell interrupt
-    uint32_t irq = multicore_doorbell_irq_num(doorbell_core_command);
-    irq_set_enabled(irq, true);  
+    // Unmask doorbell IRQ in Core 1
+    irq_set_enabled(xCore->getDoorbellIrqNum(), true);  
 
     while(true) {
         tight_loop_contents();
@@ -182,16 +205,21 @@ bool core1_core_motion_timer_callback( repeating_timer *rt )
 // Note: due to rp2350 only having a single IRQ# for doorbells, 
 // both of the following ISRs will be called upon doorbell interrupt - 
 // but only on the core that received the doorbell interrupt
-void doorbell_core0_isr(void) {    
-    if(get_core_num() == 0) {
-        multicore_doorbell_clear_current_core(doorbell_core_status);
+void doorbell_core0_isr(void) {
+    if(get_core_num() == 0) {        
         coreProxy->checkStatus(); 
     }
 }
 
 void doorbell_core1_isr(void) {
     if(get_core_num() == 1) {
-        multicore_doorbell_clear_current_core(doorbell_core_command);
         core->checkQueues();
     } 
 }
+#else
+bool core_motion_timer_callback( repeating_timer *rt )
+{
+    core->ISR();
+    return true;
+}
+#endif

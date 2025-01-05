@@ -36,21 +36,8 @@
 #include "Encoder.h"
 #include "ControlPanel.h"
 #include "Tables.h"
-#include "multicore.h"
 
 #define NULL_FEED 0.0
-
-typedef struct {
-    bool isAlarm;
-    bool powerOn;
-    float rpm;
-} corestatus_t;
-
-extern queue_t feed_queue; // TODO: maybe pass this into constructor instead
-extern queue_t corestatus_queue; // TODO: maybe pass this into constructor instead
-extern queue_t poweron_queue; // TODO: maybe pass this into constructor instead
-//extern int doorbell_core_command; // TODO: maybe pass this into constructor instead
-extern int doorbell_core_status; // TODO: maybe pass this into constructor instead
 
 class Core
 {
@@ -66,20 +53,25 @@ private:
 
     int32_t previousSpindlePosition;
 
+    bool powerOn;
+
     int32_t feedRatio(int32_t count);
 
-    corestatus_t status;
+protected:
+    void setFeed(float);
+    Core(void);    
 
 public:
-    Core( Encoder *encoder, StepperDrive *stepperDrive );
+    Core( Encoder *encoder, StepperDrive *stepperDrive );    
 
-    void setFeed(float);
-    void setReverse(bool reverse);
+    virtual void setFeed(const FEED_THREAD*);
+    virtual void setReverse(bool reverse);
+    virtual void setPowerOn(bool);
 
-    void setPowerOn(bool);
-
-    void pollStatus();
-    void checkQueues();
+    virtual uint16_t getRPM(void);
+    virtual bool getIsAlarm(void);
+    virtual bool getIsPowerOn(void);
+    virtual bool getIsPanic(void);
 
     void ISR( void );
 };
@@ -89,17 +81,31 @@ inline void Core :: setFeed(float feed)
     this->feed = feed;
 }
 
-inline void Core :: pollStatus( void )
+inline void Core :: setFeed(const FEED_THREAD *feed)
 {
-    status.rpm = encoder->getRPM();
-    status.isAlarm = stepperDrive->isAlarm();
-    bool rv = queue_try_add(&corestatus_queue, &status);
-    multicore_doorbell_set_other_core(doorbell_core_status);
+    float _feed = (float)feed->numerator / (float) feed->denominator;
+    this->feed = _feed;
 }
 
 inline int32_t Core :: feedRatio(int32_t count)
 {
     return ((float)count) * this->feed * feedDirection;
+}
+
+inline uint16_t Core :: getRPM(void) {
+    return encoder->getRPM();
+}
+
+inline bool Core :: getIsAlarm(void) {
+    return stepperDrive->isAlarm();
+}
+
+inline bool Core :: getIsPowerOn(void) {
+    return powerOn;
+}
+
+inline bool Core :: getIsPanic(void) {
+    return stepperDrive->checkStepBacklog();
 }
 
 #endif // __CORE_H

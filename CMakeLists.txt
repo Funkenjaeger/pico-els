@@ -70,8 +70,12 @@ add_library(core INTERFACE)
 target_sources(core INTERFACE ${CMAKE_CURRENT_LIST_DIR}/Core.cpp)
 add_library(ui INTERFACE)
 target_sources(ui INTERFACE ${CMAKE_CURRENT_LIST_DIR}/UserInterface.cpp)
-add_library(multicore INTERFACE)
-target_sources(ui INTERFACE ${CMAKE_CURRENT_LIST_DIR}/multicore.cpp)
+add_library(core_proxy INTERFACE)
+target_sources(ui INTERFACE ${CMAKE_CURRENT_LIST_DIR}/CoreProxy.cpp)
+add_library(multicore_core INTERFACE)
+target_sources(ui INTERFACE ${CMAKE_CURRENT_LIST_DIR}/MulticoreCore.cpp)
+add_library(cross_core_messaging INTERFACE)
+target_sources(ui INTERFACE ${CMAKE_CURRENT_LIST_DIR}/CrossCoreMessaging.cpp)
 
 # Add any user requested libraries
 target_link_libraries(pico-els 
@@ -86,7 +90,9 @@ target_link_libraries(pico-els
         pico_controlpanel
         pico_stepperdrive
         feedtable
-        multicore
+        core_proxy
+        multicore_core
+        cross_core_messaging
         core
         ui)
 

@@ -23,36 +23,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __MULTICORE_H
-#define __MULTICORE_H
+#ifndef __MULTICORECORE_H
+#define __MULTICORECORE_H
 
 #include "pico/stdlib.h"
 #include "pico/util/queue.h"
 #include "pico/multicore.h"
 #include "Core.h"
+#include "CrossCoreMessaging.h"
 
-extern queue_t feed_queue;
-extern queue_t poweron_queue;
-extern queue_t reverse_queue;
-extern queue_t corestatus_queue;
-extern int doorbell_core_command;
-
-class CoreProxy
-{
+class MulticoreCore : public Core {
 private:
-    float _rpm;
-    bool _isAlarm;
-    bool _powerOn;
-
+    CrossCoreMessaging *xCore;
+    
 public:
-    CoreProxy( void );
-    void setFeed(const FEED_THREAD *feed);
-    void setReverse(bool reverse);
-    uint16_t getRPM(void);
-    bool isAlarm();
-    bool isPowerOn();
-    void setPowerOn(bool);
-    void checkStatus(void);
+    MulticoreCore(Encoder*, StepperDrive*, CrossCoreMessaging*);
+    void pollStatus(void);
+    void checkQueues(void);
 };
 
 #endif
