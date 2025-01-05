@@ -38,27 +38,37 @@ StepperDrive :: StepperDrive(void)
     //
     currentPosition = 0;
     desiredPosition = 0;
-
-    //
-    // State machine starts at state zero
-    //
-    state = 0;
 }
 
 void StepperDrive :: initHardware(void)
 {    
-    gpio_init(STEPPER_STEP_PIN);
     gpio_init(STEPPER_DIRECTION_PIN);
     gpio_init(STEPPER_ENABLE_PIN);
     gpio_init(STEPPER_ALARM_PIN);
-    gpio_put(STEPPER_STEP_PIN, false);
     gpio_put(STEPPER_DIRECTION_PIN, false);
     gpio_put(STEPPER_ENABLE_PIN, false);
-    gpio_set_dir(STEPPER_STEP_PIN, GPIO_OUT);
     gpio_set_dir(STEPPER_DIRECTION_PIN, GPIO_OUT);
     gpio_set_dir(STEPPER_ENABLE_PIN, GPIO_OUT);
     gpio_set_dir(STEPPER_ALARM_PIN, GPIO_IN);
     gpio_pull_up(STEPPER_ALARM_PIN);
+
+    // stepper pio
+    pio = pio1;
+    pio_sm = pio_claim_unused_sm(pio, true);
+    int stm_offset = pio_add_program(pio, &stepper_program);
+    stepper_program_init(pio, pio_sm, stm_offset, STEPPER_STEP_PIN, 6e6);
+    #ifdef INVERT_STEP_PIN
+        gpio_set_outover(STEPPER_STEP_PIN, GPIO_OVERRIDE_INVERT);
+    #endif
+    #ifdef INVERT_DIRECTION_PIN
+        gpio_set_outover(STEPPER_DIRECTION_PIN, GPIO_OVERRIDE_INVERT);
+    #endif
+    #ifdef INVERT_ENABLE_PIN
+        gpio_set_outover(STEPPER_ENABLE_PIN, GPIO_OVERRIDE_INVERT);
+    #endif
+    #ifdef INVERT_ALARM_PIN
+        gpio_set_inover(STEPPER_ALARM_PIN, GPIO_OVERRIDE_INVERT);
+    #endif
 
     setEnabled(true);
 }

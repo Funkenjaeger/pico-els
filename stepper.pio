@@ -1,0 +1,41 @@
+.program stepper
+
+.define public STEPDELAY 30 ; step pulse/space duration = <pio clock period> / STEPDELAY
+
+    jmp end
+.wrap_target
+bitloop:
+    out x, 1
+branchloop:
+    jmp !x end
+pulse:
+    set pins 1 [STEPDELAY-1]
+    set pins 0 [STEPDELAY-3]
+    jmp  bitloop   
+end:
+    irq set 0     ; set IRQ 0 bit, indicating idle
+    out null, 32  ; Clear OSR
+    out x, 1      ; Will block if TX FIFO is empty (until auto-pull succeeds)
+    irq clear 0   ; Clear IRQ 0 bit, indicating not idle
+    jmp branchloop
+.wrap
+
+% c-sdk {
+#include "hardware/clocks.h"
+
+static inline void stepper_program_init(PIO pio, uint sm, uint offset, uint pin, float freq) {
+
+    pio_gpio_init(pio, pin);
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+
+    pio_sm_config c = stepper_program_get_default_config(offset);
+    sm_config_set_set_pins(&c, pin, 1);
+    sm_config_set_out_shift(&c, true, true, 32);
+
+    float div = clock_get_hz(clk_sys) / (freq);
+    sm_config_set_clkdiv(&c, div);
+
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}

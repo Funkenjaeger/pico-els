@@ -68,7 +68,7 @@ void Core :: setPowerOn(bool powerOn)
 void Core :: ISR( void )
 {
     
-    if( this->feed != NULL_FEED ) {
+    if( this->feed != NULL_FEED && !stepperDrive->busy()) {
         // read the encoder
         int32_t spindlePosition = encoder->getPosition();
 
@@ -95,6 +95,6 @@ void Core :: ISR( void )
         previousFeed = feed;
 
         // service the stepper drive state machine
-        stepperDrive->ISR();
+        stepperDrive->move();
     }
 }
