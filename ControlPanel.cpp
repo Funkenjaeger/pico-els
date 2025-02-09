@@ -41,10 +41,10 @@
 
 
 // Lower the TM1638 CS (STB) line
-#define CS_ASSERT gpio_put(CONTROL_PANEL_STB_PIN, true)
+#define CS_ASSERT gpio_put(CONTROL_PANEL_STB_PIN, false)
 
 // Raise the TM1638 CS (STB) line
-#define CS_RELEASE gpio_put(CONTROL_PANEL_STB_PIN, false)
+#define CS_RELEASE gpio_put(CONTROL_PANEL_STB_PIN, true)
 
 
 ControlPanel :: ControlPanel(SPIBus *spiBus)

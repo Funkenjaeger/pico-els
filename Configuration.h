@@ -149,13 +149,13 @@
 #define STEPPER_ALARM_PIN       9
 
 // Spindle encoder inputs
-#define QUADRATURE_A_PIN 16
-#define QUADRATURE_B_PIN 17
+#define QUADRATURE_A_PIN 28
+#define QUADRATURE_B_PIN 27
 
 // Control panel I/O
-#define CONTROL_PANEL_STB_PIN 2
-#define CONTROL_PANEL_DO_PIN 4
-#define CONTROL_PANEL_CLK_PIN 3
-#define CONTROL_PANEL_DI_PIN 5
+#define CONTROL_PANEL_STB_PIN 16
+#define CONTROL_PANEL_DO_PIN 19
+#define CONTROL_PANEL_CLK_PIN 17
+#define CONTROL_PANEL_DI_PIN 18
 
 #endif // __CONFIGURATION_H

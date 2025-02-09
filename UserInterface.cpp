@@ -167,7 +167,7 @@ void UserInterface :: loop( void )
     overrideMessage();
 
     // read keypresses from the control panel
-    keys = controlPanel->getKeys();
+    keys = controlPanel->getKeys(); 
 
     // respond to keypresses
     if( currentRpm == 0 )

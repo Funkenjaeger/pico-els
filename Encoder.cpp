@@ -41,6 +41,8 @@ void Encoder :: initHardware(void)
 {
     gpio_set_dir(QUADRATURE_A_PIN, GPIO_IN);
     gpio_set_dir(QUADRATURE_B_PIN, GPIO_IN);
+    gpio_pull_up(QUADRATURE_A_PIN);
+    gpio_pull_up(QUADRATURE_B_PIN);
     gpio_set_function(QUADRATURE_A_PIN, GPIO_FUNC_PIO0);    
     gpio_set_function(QUADRATURE_B_PIN, GPIO_FUNC_PIO0);
     pio = pio0;
