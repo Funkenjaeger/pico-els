@@ -14,7 +14,7 @@ This design seeks to improve upon the original ELS in a couple of primary ways:
  * Use an accessible, popular ecosystem to facilitate further development (let's face it, the TI CCS toolchain is not great)
  
 ### Architecture
-This implementation uses the Raspberry Pi Pico 2 (RP2350 silicon).  This chip has dual ARM cores and PIO peripheral state machines, well suited to a mix of realtime and non-realtime interfaces.ccccccccccccccccccccc
+This implementation uses the Raspberry Pi Pico 2 (RP2350 silicon).  This chip has dual ARM cores and PIO peripheral state machines, well suited to a mix of realtime and non-realtime interfaces.
 
 ## License and Disclaimer
 
