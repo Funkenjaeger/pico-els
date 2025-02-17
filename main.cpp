@@ -36,12 +36,13 @@
 #include "pico/util/queue.h"
 #include "hardware/pio.h"
 
-//#include "SanityCheck.h"
 #include "ControlPanel.h"
 #include "StepperDrive.h"
 #include "Encoder.h"
 #include "Core.h"
 #include "UserInterface.h"
+#include "SanityCheck.h"
+
 #ifdef USE_MULTICORE
 #include "CoreProxy.h"
 #include "CrossCoreMessaging.h"
