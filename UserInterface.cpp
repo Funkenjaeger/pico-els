@@ -193,7 +193,7 @@ void UserInterface :: loop( void )
             if( keys.bit.FWD_REV )
             {
                 this->reverse = ! this->reverse;
-                core->setReverse(this->reverse); // TODO: DEBUG - fwd/rev doesn't appear to be working
+                core->setReverse(this->reverse);
             }
             if( keys.bit.SET )
             {
