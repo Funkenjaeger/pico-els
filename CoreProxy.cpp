@@ -30,19 +30,3 @@ CoreProxy :: CoreProxy ( CrossCoreMessaging* xCore ) {
     isAlarm = false;
     isPanic = false;
 }
-
-void CoreProxy :: setFeed(const FEED_THREAD *feed) {
-    float _feed = (float)feed->numerator / (float) feed->denominator;
-    queue_try_add(&xCore->feed_queue, &_feed);
-    multicore_doorbell_set_other_core(xCore->doorbell_core_command);
-}
-
-void CoreProxy :: setReverse(bool reverse) {
-    queue_try_add(&xCore->reverse_queue, &reverse);
-    multicore_doorbell_set_other_core(xCore->doorbell_core_command);
-}
-
-void CoreProxy :: setPowerOn(bool state) {
-    queue_try_add(&xCore->poweron_queue, &state);
-    multicore_doorbell_set_other_core(xCore->doorbell_core_command);
-}

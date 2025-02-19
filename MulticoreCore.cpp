@@ -35,15 +35,15 @@ void MulticoreCore :: pollStatus( void )
     bool isAlarm = Core::getIsAlarm();
     bool isPowerOn = Core::getIsPowerOn();
     bool isPanic = Core::getIsPanic();
-    xCore->notifyCoreStatus(&rpm, &isAlarm, &isPowerOn, &isPanic);
+    xCore->pushCoreStatus(&rpm, &isAlarm, &isPowerOn, &isPanic);
 }
 
 void MulticoreCore :: checkQueues( void ) {  
-    float feed;
+    FEED_THREAD feed;
     bool powerOn, reverse;
     
     if(xCore->checkFeedCommand(&feed)) {
-        setFeed(feed);
+        setFeed(&feed);
     }
     if(xCore->checkPowerOnCommand(&powerOn)) {
         setPowerOn(powerOn);

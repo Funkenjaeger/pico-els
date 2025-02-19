@@ -29,6 +29,7 @@
 #include "pico/stdlib.h"
 #include "pico/util/queue.h"
 #include "pico/multicore.h"
+#include "Tables.h"
 
 class CrossCoreMessaging
 {
@@ -44,12 +45,13 @@ private:
 
 public:
     CrossCoreMessaging(void);
-    void notifyFeed(float*);
-    void notifyPowerOn(bool*);
-    void notifyReverse(bool*);
-    void notifyCoreStatus(float*, bool*, bool*, bool*);
+
+    void pushFeedCommand(const FEED_THREAD*);
+    void pushPowerOnCommand(bool);
+    void pushReverseCommand(bool);
+    void pushCoreStatus(float*, bool*, bool*, bool*);
     bool checkCoreStatus(float*, bool*, bool*, bool*);
-    bool checkFeedCommand(float*);
+    bool checkFeedCommand(FEED_THREAD*);
     bool checkPowerOnCommand(bool*);
     bool checkReverseCommand(bool*);
 
@@ -63,22 +65,22 @@ public:
     int doorbell_core_status;
 };
 
-inline void CrossCoreMessaging :: notifyFeed( float *feed ) {
+inline void CrossCoreMessaging :: pushFeedCommand( const FEED_THREAD *feed ) {
     queue_try_add(&feed_queue, feed);
     multicore_doorbell_set_other_core(doorbell_core_command);
 }
 
-inline void CrossCoreMessaging :: notifyPowerOn( bool *powerOn ) {
-    queue_try_add(&poweron_queue, powerOn);
+inline void CrossCoreMessaging :: pushPowerOnCommand( bool powerOn ) {
+    queue_try_add(&poweron_queue, &powerOn);
     multicore_doorbell_set_other_core(doorbell_core_command);
 }
 
-inline void CrossCoreMessaging :: notifyReverse( bool *reverse ) {
-    queue_try_add(&poweron_queue, reverse);
+inline void CrossCoreMessaging :: pushReverseCommand( bool reverse ) {
+    queue_try_add(&reverse_queue, &reverse);
     multicore_doorbell_set_other_core(doorbell_core_command);
 }
 
-inline void CrossCoreMessaging :: notifyCoreStatus( float *rpm, bool *isAlarm, bool *powerOn, bool *isPanic) {
+inline void CrossCoreMessaging :: pushCoreStatus( float *rpm, bool *isAlarm, bool *powerOn, bool *isPanic) {
     corestatus_t coreStatus = {};
     coreStatus.rpm = *rpm;
     coreStatus.isAlarm = *isAlarm;
@@ -94,7 +96,7 @@ inline bool CrossCoreMessaging :: commandQueuesEmpty(void) {
         queue_is_empty(&reverse_queue);
 }
 
-inline bool CrossCoreMessaging :: checkFeedCommand( float* feed) {
+inline bool CrossCoreMessaging :: checkFeedCommand(FEED_THREAD* feed) {
     bool rv = queue_try_remove(&feed_queue, feed);
     if(commandQueuesEmpty()) {
         multicore_doorbell_clear_current_core(doorbell_core_command);

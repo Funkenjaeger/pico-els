@@ -76,11 +76,6 @@ public:
     void ISR( void );
 };
 
-inline void Core :: setFeed(float feed)
-{
-    this->feed = feed;
-}
-
 inline void Core :: setFeed(const FEED_THREAD *feed)
 {
     float _feed = (float)feed->numerator / (float) feed->denominator;

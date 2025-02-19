@@ -27,7 +27,7 @@
 
 CrossCoreMessaging :: CrossCoreMessaging( void ) {
     // Set up queues & doorbells for interfacing between cores
-    queue_init(&feed_queue, sizeof(float), 4);
+    queue_init(&feed_queue, sizeof(FEED_THREAD), 4);
     queue_init(&poweron_queue, sizeof(bool), 4);
     queue_init(&reverse_queue, sizeof(bool), 4);
     queue_init(&corestatus_queue, sizeof(corestatus_t), 4);    

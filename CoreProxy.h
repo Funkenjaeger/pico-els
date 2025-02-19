@@ -44,8 +44,8 @@ private:
 public:
     CoreProxy( CrossCoreMessaging* );
 
-    void setFeed(const FEED_THREAD *feed) override;
-    void setReverse(bool reverse) override;
+    void setFeed(const FEED_THREAD*) override;
+    void setReverse(bool) override;
     void setPowerOn(bool) override;
 
     uint16_t getRPM(void) override;
@@ -74,6 +74,18 @@ inline bool CoreProxy :: getIsPanic(void) {
 
 inline void CoreProxy :: checkStatus(void) {
     xCore->checkCoreStatus(&rpm, &isAlarm, &powerOn, &isPanic);
+}
+
+inline void CoreProxy :: setFeed(const FEED_THREAD* feed) {
+    xCore->pushFeedCommand(feed);
+}
+
+inline void CoreProxy :: setReverse(bool reverse) {
+    xCore->pushReverseCommand(reverse);
+}
+
+inline void CoreProxy :: setPowerOn(bool state) {
+    xCore->pushPowerOnCommand(state);
 }
 
 #endif
