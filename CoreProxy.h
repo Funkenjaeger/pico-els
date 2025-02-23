@@ -47,6 +47,7 @@ public:
     void setFeed(const FEED_THREAD*) override;
     void setReverse(bool) override;
     void setPowerOn(bool) override;
+    void setGearRatio(float) override;
 
     uint16_t getRPM(void) override;
     bool getIsAlarm() override;
@@ -86,6 +87,10 @@ inline void CoreProxy :: setReverse(bool reverse) {
 
 inline void CoreProxy :: setPowerOn(bool state) {
     xCore->pushPowerOnCommand(state);
+}
+
+inline void CoreProxy :: setGearRatio(float gearRatio) {
+    xCore->pushGearRatioCommand(gearRatio);
 }
 
 #endif

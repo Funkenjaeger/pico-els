@@ -48,6 +48,9 @@ private:
     float feed;
     float previousFeed;
 
+    float gearRatio;
+    float previousGearRatio;
+
     int16_t feedDirection;
     int16_t previousFeedDirection;
 
@@ -66,6 +69,7 @@ public:
     virtual void setFeed(const FEED_THREAD*);
     virtual void setReverse(bool reverse);
     virtual void setPowerOn(bool);
+    virtual void setGearRatio(float gearRatio);
 
     virtual uint16_t getRPM(void);
     virtual bool getIsAlarm(void);
@@ -79,11 +83,15 @@ inline void Core :: setFeed(const FEED_THREAD *feed)
 {
     this->feed = (float)feed->numerator / (float) feed->denominator;
 }
+
+inline void Core :: setGearRatio(float gearRatio)
+{
+    this->gearRatio = gearRatio;
 }
 
 inline int32_t Core :: feedRatio(int32_t count)
 {
-    return ((float)count) * this->feed * feedDirection;
+    return (int32_t)((double)count * this->feed * this->gearRatio) * feedDirection;
 }
 
 inline uint16_t Core :: getRPM(void) {

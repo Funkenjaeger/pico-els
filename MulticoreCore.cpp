@@ -41,6 +41,7 @@ void MulticoreCore :: pollStatus( void )
 void MulticoreCore :: checkQueues( void ) {  
     FEED_THREAD feed;
     bool powerOn, reverse;
+    float gearRatio;
     
     if(xCore->checkFeedCommand(&feed)) {
         setFeed(&feed);
@@ -50,5 +51,8 @@ void MulticoreCore :: checkQueues( void ) {
     }
     if(xCore->checkReverseCommand(&reverse)) {
         setReverse(reverse);
+    }
+    if(xCore->checkGearRatioCommand(&gearRatio)) {
+        setGearRatio(gearRatio);
     }
 }
