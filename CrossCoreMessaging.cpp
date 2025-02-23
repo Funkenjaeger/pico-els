@@ -36,7 +36,7 @@ CrossCoreMessaging :: CrossCoreMessaging( void ) {
     doorbell_core_status = multicore_doorbell_claim_unused((1 << NUM_CORES) - 1, true);
 }
 
-bool CrossCoreMessaging :: checkCoreStatus( float *rpm, bool *isAlarm, bool *powerOn, bool *isPanic ) {
+bool CrossCoreMessaging :: checkCoreStatus( uint16_t *rpm, bool *isAlarm, bool *powerOn, bool *isPanic ) {
     
     corestatus_t coreStatus;
     if(queue_try_remove(&corestatus_queue, &coreStatus)) {

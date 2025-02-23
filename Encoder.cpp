@@ -50,13 +50,12 @@ void Encoder :: initHardware(void)
     pio_sm = pio_claim_unused_sm(pio, true);
     quadratureA_program_init(pio, pio_sm, pio_offset, QUADRATURE_A_PIN, QUADRATURE_B_PIN);
 
-    add_repeating_timer_us(1e6/_ENCODER_RPM_CALC_HZ, encoder_timer_callback, this, &timer);
+    add_repeating_timer_ms(-1000/_ENCODER_RPM_CALC_HZ, encoder_timer_callback, this, &timer);
 }
 
 int32_t Encoder :: getPosition(void)
 {
     pio_sm_exec_wait_blocking(pio, pio_sm, pio_encode_in(pio_x, 32));
-    //return static_cast<int32_t>(pio_sm_get_blocking(pio, pio_sm));
     return (int32_t)pio_sm_get_blocking(pio, pio_sm);
 }
 
@@ -65,7 +64,7 @@ bool encoder_timer_callback(repeating_timer *rt)
     Encoder * encoder = static_cast<Encoder *>(rt->user_data);
     int32_t position = encoder->getPosition();
 
-    encoder->rpm = uint16_t(abs(position - encoder->previous) * _ENCODER_RPM_CALC_HZ * 60 / ENCODER_RESOLUTION);
+    encoder->rpm = (uint16_t)(abs(position - encoder->previous) * _ENCODER_RPM_CALC_HZ * 60 / ENCODER_RESOLUTION);
 
     encoder->previous = position;
     return true;

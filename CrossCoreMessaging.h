@@ -37,7 +37,7 @@ private:
     typedef struct {
         bool isAlarm;
         bool powerOn;
-        float rpm;
+        uint16_t rpm;
         bool isPanic;
     } corestatus_t;
 
@@ -49,10 +49,10 @@ public:
     void pushFeedCommand(const FEED_THREAD*);
     void pushPowerOnCommand(bool);
     void pushReverseCommand(bool);
-    void pushCoreStatus(float*, bool*, bool*, bool*);
+    void pushCoreStatus(uint16_t*, bool*, bool*, bool*);
     void pushGearRatioCommand(float);
 
-    bool checkCoreStatus(float*, bool*, bool*, bool*);
+    bool checkCoreStatus(uint16_t*, bool*, bool*, bool*);
     bool checkFeedCommand(FEED_THREAD*);
     bool checkPowerOnCommand(bool*);
     bool checkReverseCommand(bool*);
@@ -89,7 +89,7 @@ inline void CrossCoreMessaging :: pushGearRatioCommand( float gearRatio ) {
     multicore_doorbell_set_other_core(doorbell_core_command);
 }
 
-inline void CrossCoreMessaging :: pushCoreStatus( float *rpm, bool *isAlarm, bool *powerOn, bool *isPanic) {
+inline void CrossCoreMessaging :: pushCoreStatus( uint16_t *rpm, bool *isAlarm, bool *powerOn, bool *isPanic) {
     corestatus_t coreStatus = {};
     coreStatus.rpm = *rpm;
     coreStatus.isAlarm = *isAlarm;

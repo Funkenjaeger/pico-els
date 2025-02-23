@@ -35,7 +35,7 @@
 class CoreProxy : public Core
 {
 private:
-    float rpm;
+    uint16_t rpm;
     bool isAlarm;
     bool powerOn;
     bool isPanic;

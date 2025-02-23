@@ -31,7 +31,7 @@ MulticoreCore :: MulticoreCore(Encoder* e, StepperDrive* s, CrossCoreMessaging* 
 
 void MulticoreCore :: pollStatus( void )
 {
-    float rpm = Core::getRPM();
+    uint16_t rpm = Core::getRPM();
     bool isAlarm = Core::getIsAlarm();
     bool isPowerOn = Core::getIsPowerOn();
     bool isPanic = Core::getIsPanic();
