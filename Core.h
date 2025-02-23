@@ -58,7 +58,6 @@ private:
     int32_t feedRatio(int32_t count);
 
 protected:
-    void setFeed(float);
     Core(void);    
 
 public:
@@ -78,8 +77,8 @@ public:
 
 inline void Core :: setFeed(const FEED_THREAD *feed)
 {
-    float _feed = (float)feed->numerator / (float) feed->denominator;
-    this->feed = _feed;
+    this->feed = (float)feed->numerator / (float) feed->denominator;
+}
 }
 
 inline int32_t Core :: feedRatio(int32_t count)

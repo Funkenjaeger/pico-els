@@ -26,7 +26,7 @@
 #include "CoreProxy.h"
 
 CoreProxy :: CoreProxy ( CrossCoreMessaging* xCore ) {
-    this-> xCore = xCore;
+    this->xCore = xCore;
     isAlarm = false;
     isPanic = false;
 }
