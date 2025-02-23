@@ -40,7 +40,7 @@
 //================================================================================
 
 // For Imperial leadscrews: pitch in Threads Per Inch (TPI)
-#define LEADSCREW_TPI 16 // This is with the gearbox set to THREAD (not feed) on speed C (lowest gear)
+#define LEADSCREW_TPI 8
 
 // For metric leadscrews: pitch in hundredths of a millimeter (HMM)
 // Example: 200hmm = 2mm
