@@ -92,6 +92,9 @@
 // Encoder resolution (counts per revolution)
 #define ENCODER_RESOLUTION 6144 //= 1024 PPR * 4 counts/pulse * 60 T spindle pulley / 40 T encoder pulley
 
+// Uncomment to reverse encoder direction
+#define REVERSE_ENCODER
+
 //================================================================================
 //                                FEATURES
 //
