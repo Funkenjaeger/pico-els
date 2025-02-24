@@ -33,7 +33,7 @@
 #include <cstdint>
 #include "Configuration.h"
 #include "hardware/pio.h"
-#include "quadrature.pio.h"
+#include "quadrature_encoder.pio.h"
 #include "pico/stdlib.h"
 
 #define _ENCODER_MAX_COUNT UINT32_MAX
@@ -45,7 +45,6 @@ private:
     int32_t previous;
     uint16_t rpm;
     PIO pio;
-    uint32_t pio_offset;
     uint32_t pio_sm;
     repeating_timer timer;
     friend bool encoder_timer_callback( repeating_timer *rt );
