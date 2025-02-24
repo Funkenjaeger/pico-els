@@ -39,25 +39,22 @@ Encoder :: Encoder( void )
 
 void Encoder :: initHardware(void)
 {
-    gpio_set_dir(QUADRATURE_A_PIN, GPIO_IN);
-    gpio_set_dir(QUADRATURE_B_PIN, GPIO_IN);
-    gpio_pull_up(QUADRATURE_A_PIN);
-    gpio_pull_up(QUADRATURE_B_PIN);
-    gpio_set_function(QUADRATURE_A_PIN, GPIO_FUNC_PIO0);    
-    gpio_set_function(QUADRATURE_B_PIN, GPIO_FUNC_PIO0);
-    pio = pio0;
-    pio_offset = pio_add_program(pio, &quadratureA_program);
-    pio_sm = pio_claim_unused_sm(pio, true);
-    quadratureA_program_init(pio, pio_sm, pio_offset, QUADRATURE_A_PIN, QUADRATURE_B_PIN);
+    this->pio = pio1;
+    this->pio_sm = 0; // This PIO code must be loaded at address 0 because it uses computed jumps
+    pio_sm_claim(this->pio, this->pio_sm);   
+    pio_add_program(pio, &quadrature_encoder_program);
+    quadrature_encoder_program_init(this->pio, this->pio_sm, QUADRATURE_B_PIN, 0);
 
-    add_repeating_timer_us(1e6/_ENCODER_RPM_CALC_HZ, encoder_timer_callback, this, &timer);
+    add_repeating_timer_ms(-1000/_ENCODER_RPM_CALC_HZ, encoder_timer_callback, this, &timer);
 }
 
 int32_t Encoder :: getPosition(void)
 {
-    pio_sm_exec_wait_blocking(pio, pio_sm, pio_encode_in(pio_x, 32));
-    //return static_cast<int32_t>(pio_sm_get_blocking(pio, pio_sm));
-    return (int32_t)pio_sm_get_blocking(pio, pio_sm);
+    #ifdef REVERSE_ENCODER
+        return -quadrature_encoder_get_count(this->pio, this->pio_sm);
+    #else
+        return quadrature_encoder_get_count(this->pio, this->pio_sm);
+    #endif
 }
 
 bool encoder_timer_callback(repeating_timer *rt)
@@ -65,7 +62,7 @@ bool encoder_timer_callback(repeating_timer *rt)
     Encoder * encoder = static_cast<Encoder *>(rt->user_data);
     int32_t position = encoder->getPosition();
 
-    encoder->rpm = uint16_t(abs(position - encoder->previous) * _ENCODER_RPM_CALC_HZ * 60 / ENCODER_RESOLUTION);
+    encoder->rpm = (uint16_t)(abs(position - encoder->previous) * _ENCODER_RPM_CALC_HZ * 60 / ENCODER_RESOLUTION);
 
     encoder->previous = position;
     return true;

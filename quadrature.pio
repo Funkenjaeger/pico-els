@@ -5,7 +5,7 @@
 
 .program quadratureB
 start:
-    wait 0 pin 0            ; wait for B == 0
+    wait 1 pin 0            ; wait for B == 1
     jmp PIN, wait_high      ; if A == 0
     mov y, !x                   ; x++ {
     jmp y--, nop1               ;
@@ -16,7 +16,7 @@ wait_high:
     jmp x--, nop2           ; x-- {
 nop2:                       ; }
 
-    wait 1 PIN 0            ; wait for B == 1
+    wait 0 PIN 0            ; wait for B == 0
     jmp PIN, wait_low       ; if A == 0
     jmp x--, start               ; x-- {
                                ; }

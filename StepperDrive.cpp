@@ -53,7 +53,7 @@ void StepperDrive :: initHardware(void)
     gpio_pull_up(STEPPER_ALARM_PIN);
 
     // stepper pio
-    pio = pio1;
+    pio = pio0;
     pio_sm = pio_claim_unused_sm(pio, true);
     int stm_offset = pio_add_program(pio, &stepper_program);
     stepper_program_init(pio, pio_sm, stm_offset, STEPPER_STEP_PIN, 6e6);

@@ -37,7 +37,7 @@ private:
     typedef struct {
         bool isAlarm;
         bool powerOn;
-        float rpm;
+        uint16_t rpm;
         bool isPanic;
     } corestatus_t;
 
@@ -49,11 +49,14 @@ public:
     void pushFeedCommand(const FEED_THREAD*);
     void pushPowerOnCommand(bool);
     void pushReverseCommand(bool);
-    void pushCoreStatus(float*, bool*, bool*, bool*);
-    bool checkCoreStatus(float*, bool*, bool*, bool*);
+    void pushCoreStatus(uint16_t*, bool*, bool*, bool*);
+    void pushGearRatioCommand(float);
+
+    bool checkCoreStatus(uint16_t*, bool*, bool*, bool*);
     bool checkFeedCommand(FEED_THREAD*);
     bool checkPowerOnCommand(bool*);
     bool checkReverseCommand(bool*);
+    bool checkGearRatioCommand(float*);
 
     uint getDoorbellIrqNum(void);
 
@@ -61,6 +64,7 @@ public:
     queue_t poweron_queue;
     queue_t reverse_queue;
     queue_t corestatus_queue;
+    queue_t gearratio_queue;
     int doorbell_core_command;
     int doorbell_core_status;
 };
@@ -80,7 +84,12 @@ inline void CrossCoreMessaging :: pushReverseCommand( bool reverse ) {
     multicore_doorbell_set_other_core(doorbell_core_command);
 }
 
-inline void CrossCoreMessaging :: pushCoreStatus( float *rpm, bool *isAlarm, bool *powerOn, bool *isPanic) {
+inline void CrossCoreMessaging :: pushGearRatioCommand( float gearRatio ) {
+    queue_try_add(&gearratio_queue, &gearRatio);
+    multicore_doorbell_set_other_core(doorbell_core_command);
+}
+
+inline void CrossCoreMessaging :: pushCoreStatus( uint16_t *rpm, bool *isAlarm, bool *powerOn, bool *isPanic) {
     corestatus_t coreStatus = {};
     coreStatus.rpm = *rpm;
     coreStatus.isAlarm = *isAlarm;
@@ -114,6 +123,14 @@ inline bool CrossCoreMessaging :: checkPowerOnCommand( bool* powerOn) {
 
 inline bool CrossCoreMessaging :: checkReverseCommand( bool* reverse) {
     bool rv = queue_try_remove(&reverse_queue, reverse);
+    if(commandQueuesEmpty()) {
+        multicore_doorbell_clear_current_core(doorbell_core_command);
+    }
+    return rv;
+}
+
+inline bool CrossCoreMessaging :: checkGearRatioCommand( float* gearRatio ) {
+    bool rv = queue_try_remove(&gearratio_queue, gearRatio);
     if(commandQueuesEmpty()) {
         multicore_doorbell_clear_current_core(doorbell_core_command);
     }

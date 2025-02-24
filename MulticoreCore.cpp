@@ -31,7 +31,7 @@ MulticoreCore :: MulticoreCore(Encoder* e, StepperDrive* s, CrossCoreMessaging* 
 
 void MulticoreCore :: pollStatus( void )
 {
-    float rpm = Core::getRPM();
+    uint16_t rpm = Core::getRPM();
     bool isAlarm = Core::getIsAlarm();
     bool isPowerOn = Core::getIsPowerOn();
     bool isPanic = Core::getIsPanic();
@@ -41,6 +41,7 @@ void MulticoreCore :: pollStatus( void )
 void MulticoreCore :: checkQueues( void ) {  
     FEED_THREAD feed;
     bool powerOn, reverse;
+    float gearRatio;
     
     if(xCore->checkFeedCommand(&feed)) {
         setFeed(&feed);
@@ -50,5 +51,8 @@ void MulticoreCore :: checkQueues( void ) {
     }
     if(xCore->checkReverseCommand(&reverse)) {
         setReverse(reverse);
+    }
+    if(xCore->checkGearRatioCommand(&gearRatio)) {
+        setGearRatio(gearRatio);
     }
 }
