@@ -18,8 +18,8 @@ This implementation uses the Raspberry Pi Pico 2 (RP2350 silicon).  This chip ha
 
 ## License and Disclaimer
 
-This software is distributed under the terms of the MIT license.  Read the entire
-license statement [here](https://github.com/clough42/electronic-leadscrew/blob/master/LICENSE).
+This software is distributed under the terms of the MIT license.  Read the entire license statement [here](https://github.com/Funkenjaeger/pico-els/blob/master/LICENSE).
+Portions of this software were leveraged from other sources under their respective license terms, as indicated in the headers of individual files.  Copies of the license terms are also included in the root of this repo, with the naming convention `LICENSE-*`.
 
 **Machine tools can be dangerous.**  This is especially true of machine tools that can move by themselves
 under the control of electronics and software.  You are responsible for your own safety.  Always assume
