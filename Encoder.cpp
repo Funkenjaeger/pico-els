@@ -40,9 +40,9 @@ Encoder :: Encoder( void )
 void Encoder :: initHardware(void)
 {
     this->pio = pio1;
-    this->pio_sm = 0; // This PIO code must be loaded at address 0 because it uses computed jumps
+    this->pio_sm = 0; 
     pio_sm_claim(this->pio, this->pio_sm);   
-    pio_add_program(pio, &quadrature_encoder_program);
+    pio_add_program_at_offset(pio, &quadrature_encoder_program, 0); // This PIO code must be loaded at address 0 because it uses computed jumps
     quadrature_encoder_program_init(this->pio, this->pio_sm, QUADRATURE_B_PIN, 0);
 
     add_repeating_timer_ms(-1000/_ENCODER_RPM_CALC_HZ, encoder_timer_callback, this, &timer);
