@@ -47,6 +47,29 @@
 //#define LEADSCREW_HMM 200
 
 //================================================================================
+//                                  GEARBOX
+//
+//================================================================================
+
+#define USE_GEARBOX
+
+#ifdef USE_GEARBOX
+// Gears
+#define GEARBOX_DRIVE_RATIO_A 1.0
+#define GEARBOX_DRIVE_RATIO_B 0.5
+#define GEARBOX_DRIVE_RATIO_C 2.0
+
+// Use gearbox knob for Forward/Reverse selection? (lock ELS to same direction always)
+#define USE_GEARBOX_FWD_REV
+
+// Use gearbox knob for Feed/Thread selection? (Selects Feed vs. Thread mode and drive ratio)
+#define USE_GEARBOX_FEED_THREAD
+#define FEED_GEAR_RATIO 1.5625
+#define THREAD_GEAR_RATIO 1.0
+
+#endif // USE_GEARBOX
+
+//================================================================================
 //                                STEPPER/SERVO
 //
 // Define the number of steps and microsteps for your stepper motor, the pin
@@ -138,6 +161,8 @@
 // period will be twice this value.
 #define CONTROL_PANEL_CLK_CYCLE_US 5
 
+#define GEARBOX_I2C_BAUDRATE 100000
+
 //================================================================================
 //                               GPIO PIN ASSIGNMENTS
 //
@@ -158,5 +183,9 @@
 #define CONTROL_PANEL_DO_PIN 19
 #define CONTROL_PANEL_CLK_PIN 17
 #define CONTROL_PANEL_DI_PIN 18
+
+// Gearbox sensor peripheral
+#define GEARBOX_SDA_PIN 20
+#define GEARBOX_SCL_PIN 21
 
 #endif // __CONFIGURATION_H

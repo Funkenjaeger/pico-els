@@ -28,56 +28,43 @@
 // SOFTWARE.
 
 
-#ifndef __USERINTERFACE_H
-#define __USERINTERFACE_H
+#ifndef __GEARBOX_H
+#define __GEARBOX_H
 
-#include <cstdint>
-#include "ControlPanel.h"
-#include "Core.h"
-#include "Tables.h"
-#include "CoreProxy.h"
-#include "Gearbox.h"
+#define GEARBOX_STATE_REG_ADDR 1
+#define GEARBOX_RATIO_REG_ADDR 2
 
-typedef struct MESSAGE
-{
-    uint8_t message[8];
-    uint16_t displayTime;
-    const MESSAGE *next;
-} MESSAGE;
-
-class UserInterface
-{
-private:
-    ControlPanel *controlPanel;
-    Core *core;
-    FeedTableFactory *feedTableFactory;
-    Gearbox *gearbox;
-
-    bool metric;
-    bool thread;
-    bool reverse;
-
-    FeedTable *feedTable;
-
-    KEY_REG keys;
-
-    GearboxState gearboxState;
-
-    const MESSAGE *message;
-    uint16_t messageTime;
-
-    const FEED_THREAD *loadFeedTable();
-    LED_REG calculateLEDs();
-    void setMessage(const MESSAGE *message);
-    void overrideMessage( void );
-    void clearMessage( void );
-
-public:
-    UserInterface(ControlPanel *controlPanel, Core *core, FeedTableFactory *feedTableFactory, Gearbox *gearbox);
-
-    void loop( void );
-
-    void panicStepBacklog( void );
+enum GearboxDirection {
+    FORWARD,
+    REVERSE
 };
 
-#endif // __USERINTERFACE_H
+enum GearboxFeedThread {
+    FEED,
+    THREAD
+};
+
+enum GearboxGear {
+    A,
+    B,
+    C
+};
+
+typedef struct {
+    GearboxDirection direction;
+    GearboxFeedThread feed_thread;
+    GearboxGear gear;
+    float finalDriveRatio;
+} GearboxState;
+
+class Gearbox
+{
+private:
+    GearboxState state;
+
+public:
+    Gearbox(void);
+    bool getState(GearboxState*);
+};
+
+#endif // __GEARBOX_H

@@ -77,6 +77,8 @@ add_library(multicore_core INTERFACE)
 target_sources(multicore_core INTERFACE ${CMAKE_CURRENT_LIST_DIR}/MulticoreCore.cpp)
 add_library(cross_core_messaging INTERFACE)
 target_sources(cross_core_messaging INTERFACE ${CMAKE_CURRENT_LIST_DIR}/CrossCoreMessaging.cpp)
+add_library(gearbox INTERFACE)
+target_sources(gearbox INTERFACE ${CMAKE_CURRENT_LIST_DIR}/Gearbox.cpp)
 
 # Add any user requested libraries
 target_link_libraries(pico-els 
@@ -95,6 +97,7 @@ target_link_libraries(pico-els
         multicore_core
         cross_core_messaging
         core
-        ui)
+        ui
+        gearbox)
 
 pico_add_extra_outputs(pico-els)
