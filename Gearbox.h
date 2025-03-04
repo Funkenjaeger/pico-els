@@ -31,8 +31,7 @@
 #ifndef __GEARBOX_H
 #define __GEARBOX_H
 
-#define GEARBOX_STATE_REG_ADDR 1
-#define GEARBOX_RATIO_REG_ADDR 2
+#include "ControlPanel.h"
 
 enum GearboxDirection {
     FORWARD,
@@ -44,10 +43,25 @@ enum GearboxFeedThread {
     THREAD
 };
 
-enum GearboxGear {
-    A,
-    B,
-    C
+enum GearboxGear : int {
+    A = 0,
+    B = 1,
+    C = 2
+};
+
+const MESSAGE GEAR_MESSAGE[3] = {
+    {
+        .message = { BLANK, LETTER_G, LETTER_E, LETTER_A, LETTER_R, BLANK, LETTER_A, BLANK },
+        .displayTime = uint16_t(UI_REFRESH_RATE_HZ * 1.5)
+    }, 
+    {
+        .message = { BLANK, LETTER_G, LETTER_E, LETTER_A, LETTER_R, BLANK, LETTER_B, BLANK },
+        .displayTime = uint16_t(UI_REFRESH_RATE_HZ * 1.5)
+    },
+    {
+        .message = { BLANK, LETTER_G, LETTER_E, LETTER_A, LETTER_R, BLANK, LETTER_C, BLANK },
+        .displayTime = uint16_t(UI_REFRESH_RATE_HZ * 1.5)
+    }
 };
 
 typedef struct {

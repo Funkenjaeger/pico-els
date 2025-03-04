@@ -224,6 +224,7 @@ void UserInterface :: loop( void )
             if(rv && gearboxState.finalDriveRatio != lastGearboxState.finalDriveRatio) 
             {
                 core->setDriveRatio(gearboxState.finalDriveRatio);
+                this->setMessage(&GEAR_MESSAGE[(int)gearboxState.gear]);
             }            
             #endif
 

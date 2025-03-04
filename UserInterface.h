@@ -31,19 +31,11 @@
 #ifndef __USERINTERFACE_H
 #define __USERINTERFACE_H
 
-#include <cstdint>
 #include "ControlPanel.h"
 #include "Core.h"
 #include "Tables.h"
 #include "CoreProxy.h"
 #include "Gearbox.h"
-
-typedef struct MESSAGE
-{
-    uint8_t message[8];
-    uint16_t displayTime;
-    const MESSAGE *next;
-} MESSAGE;
 
 class UserInterface
 {
