@@ -49,6 +49,8 @@ private:
     bool thread;
     bool reverse;
 
+    bool useGearbox;
+
     FeedTable *feedTable;
 
     KEY_REG keys;

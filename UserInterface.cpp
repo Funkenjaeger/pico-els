@@ -29,6 +29,7 @@
 
 
 #include "UserInterface.h"
+#include <stdio.h>
 
 const MESSAGE STARTUP_MESSAGE_2 =
 {
@@ -89,12 +90,35 @@ UserInterface :: UserInterface(ControlPanel *controlPanel, Core *core, FeedTable
 
     this->keys.all = 0xff;
 
-    gearbox->getState(&(this->gearboxState));
+    #ifdef USE_GEARBOX
+        // Attempt to query gearbox peripheral
+        bool rval = false;
+        for(int i=0; i<10; i++) {
+            rval = gearbox->getState(&(this->gearboxState));
+            if(rval) { break; }
+            sleep_ms(100);
+        }
+        this->useGearbox = rval;
 
-    // initialize the core so we start up correctly
-    core->setReverse(this->reverse);
-    core->setFeed(loadFeedTable());
+        // initialize internal state & the core so we start up correctly
+        if(this->useGearbox) {
+            this->thread = this->gearboxState.feed_thread;
+            core->setFeed(loadFeedTable());
+            this->reverse = this->gearboxState.direction;
+            core->setReverse(false);
+            core->setDriveRatio(this->gearboxState.finalDriveRatio); 
+        } else {
+            core->setReverse(this->reverse);    
+            core->setFeed(loadFeedTable());
+        }
+    #else
+        this->useGearbox = false;
+        core->setReverse(this->reverse);    
+        core->setFeed(loadFeedTable());
+    #endif
 
+    
+    
     setMessage(&STARTUP_MESSAGE_1);
 }
 
@@ -172,8 +196,14 @@ void UserInterface :: loop( void )
     // read keypresses from the control panel
     keys = controlPanel->getKeys(); 
 
-    GearboxState lastGearboxState = gearboxState;
-    bool rv = gearbox->getState(&gearboxState);
+    #ifdef USE_GEARBOX
+        GearboxState lastGearboxState;
+        bool rv;
+        if(this->useGearbox) {
+            lastGearboxState = this->gearboxState;
+            rv = gearbox->getState(&(this->gearboxState));
+        }    
+    #endif
 
     // respond to keypresses
     if( currentRpm == 0 )
@@ -192,41 +222,19 @@ void UserInterface :: loop( void )
                 core->setFeed(loadFeedTable());
             }
 
-            #ifdef USE_GEARBOX_FEED_THREAD
-            if(rv && gearboxState.feed_thread != lastGearboxState.feed_thread)
-            {
-                this->thread = gearboxState.feed_thread;
-                core->setFeed(loadFeedTable());
-            }
-            #else
-            if( keys.bit.FEED_THREAD )
-            {
-                this->thread = ! this->thread;
-                core->setFeed(loadFeedTable());
-            }
-            #endif
+            if(!(this->useGearbox)) {
+                if( keys.bit.FEED_THREAD )
+                {
+                    this->thread = ! this->thread;
+                    core->setFeed(loadFeedTable());
+                }
 
-            #ifdef USE_GEARBOX_FWD_REV
-            if(rv && gearboxState.direction != lastGearboxState.direction)
-            {
-                this->reverse = gearboxState.direction;
-                core->setReverse(this->reverse);
+                if( keys.bit.FWD_REV )
+                {
+                    this->reverse = ! this->reverse;
+                    core->setReverse(this->reverse);
+                }
             }
-            #else
-            if( keys.bit.FWD_REV )
-            {
-                this->reverse = ! this->reverse;
-                core->setReverse(this->reverse);
-            }
-            #endif
-
-            #ifdef USE_GEARBOX
-            if(rv && gearboxState.finalDriveRatio != lastGearboxState.finalDriveRatio) 
-            {
-                core->setDriveRatio(gearboxState.finalDriveRatio);
-                this->setMessage(&GEAR_MESSAGE[(int)gearboxState.gear]);
-            }            
-            #endif
 
             if( keys.bit.SET )
             {
@@ -234,6 +242,31 @@ void UserInterface :: loop( void )
             }
         }
     }
+
+    #ifdef USE_GEARBOX
+        // Note gearbox state changes are always honored
+        if(this->useGearbox) {
+            if(rv && gearboxState.feed_thread != lastGearboxState.feed_thread)
+            {
+                this->thread = gearboxState.feed_thread;
+                core->setFeed(loadFeedTable());
+            }
+            
+            if(rv && gearboxState.direction != lastGearboxState.direction)
+            {
+                this->reverse = gearboxState.direction;
+                core->setReverse(false);
+            }
+            
+            if(rv && gearboxState.finalDriveRatio != lastGearboxState.finalDriveRatio) 
+            {
+                core->setDriveRatio(gearboxState.finalDriveRatio);
+                if(gearboxState.gear != lastGearboxState.gear) {
+                    this->setMessage(&GEAR_MESSAGE[(int)gearboxState.gear]);
+                }        
+            }
+        }
+    #endif
 
 #ifdef IGNORE_ALL_KEYS_WHEN_RUNNING
     if( currentRpm == 0 )

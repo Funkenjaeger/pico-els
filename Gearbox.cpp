@@ -53,10 +53,16 @@ bool Gearbox :: getState(GearboxState* state) {
     uint8_t rxdata[4];
 
     ret = i2c_read_blocking(i2c_default, 0x55, rxdata, 4, false);
+    bool readSucceeded = (ret == 4);
+    printf("i2c read %d bytes\n", ret);
+    if(!readSucceeded) { 
+        *state = this->state;
+        return false;
+    }
 
     uint8_t crc_value = CRC8::CRC8::calc(rxdata, sizeof(rxdata)-1);
 
-    if(ret && crc_value == rxdata[3]) {
+    if(readSucceeded && crc_value == rxdata[3]) {
         switch(rxdata[0]){
             case 'F':
                 this->state.direction = FORWARD;
@@ -119,7 +125,5 @@ bool Gearbox :: getState(GearboxState* state) {
     }
 
     *state = this->state;
-
-    //printf("%d [%02d,%02d(%c),%02d,%03d] CRC %s *** ", ret, rxdata[0], rxdata[1], 'A'+state->gear, rxdata[2], rxdata[3], crc_value==rxdata[3] ? "OK" : "MISMATCH");
-    return ret;
+    return true;
 }

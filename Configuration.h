@@ -59,11 +59,7 @@
 #define GEARBOX_DRIVE_RATIO_B 0.5
 #define GEARBOX_DRIVE_RATIO_C 2.0
 
-// Use gearbox knob for Forward/Reverse selection? (lock ELS to same direction always)
-#define USE_GEARBOX_FWD_REV
-
-// Use gearbox knob for Feed/Thread selection? (Selects Feed vs. Thread mode and drive ratio)
-#define USE_GEARBOX_FEED_THREAD
+// Drive ratio for feed versus thread modes
 #define FEED_GEAR_RATIO 1.5625
 #define THREAD_GEAR_RATIO 1.0
 
@@ -92,9 +88,9 @@
 #define STEPPER_MICROSTEPS_FEED STEPPER_MICROSTEPS
 #define STEPPER_RESOLUTION_FEED STEPPER_RESOLUTION
 
-// Step, direction and enable pins are normally active-high
+// Invert polarity of stepper-related GPIO pins (depends on hardware & wiring)
 // #define INVERT_STEP_PIN true
-// #define INVERT_DIRECTION_PIN true
+#define INVERT_DIRECTION_PIN true
 #define INVERT_ENABLE_PIN true
 #define INVERT_ALARM_PIN true
 
