@@ -41,6 +41,7 @@
 #include "Encoder.h"
 #include "Core.h"
 #include "UserInterface.h"
+#include "Gearbox.h"
 #include "SanityCheck.h"
 
 #ifdef USE_MULTICORE
@@ -97,6 +98,9 @@ Encoder* encoder;
 // Stepper driver
 StepperDrive* stepperDrive;
 
+// Gearbox
+Gearbox* gearbox;
+
 #ifdef USE_MULTICORE
 CrossCoreMessaging* xCore;
 // Core engine
@@ -137,11 +141,12 @@ int main()
     controlPanel = new ControlPanel(spiBus);
     encoder = new Encoder();
     stepperDrive = new StepperDrive();
+    gearbox = new Gearbox();
 
     #ifdef USE_MULTICORE
     core = new MulticoreCore(encoder, stepperDrive, xCore);
     coreProxy = new CoreProxy(xCore);
-    userInterface = new UserInterface(controlPanel, coreProxy, feedTableFactory);
+    userInterface = new UserInterface(controlPanel, coreProxy, feedTableFactory, gearbox);
     #else
     core = new Core(encoder, stepperDrive);
     userInterface = new UserInterface(controlPanel, core, feedTableFactory);

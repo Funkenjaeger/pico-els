@@ -37,7 +37,7 @@ Core :: Core( Encoder *encoder, StepperDrive *stepperDrive )
     feed = NULL_FEED;
     feedDirection = 0;
 
-    gearRatio = 1.0;
+    driveRatio = 1.0;
 
     previousSpindlePosition = 0;
     previousFeedDirection = 0;
@@ -80,7 +80,7 @@ void Core :: ISR( void )
         }
 
         // if the feed, direction, or gear ratio changed, reset sync to avoid a big step
-        if( feed != previousFeed || feedDirection != previousFeedDirection || gearRatio != previousGearRatio) {
+        if( feed != previousFeed || feedDirection != previousFeedDirection || driveRatio != previousDriveRatio) {
             stepperDrive->setCurrentPosition(desiredSteps);
         }
 
@@ -88,7 +88,7 @@ void Core :: ISR( void )
         previousSpindlePosition = spindlePosition;
         previousFeedDirection = feedDirection;
         previousFeed = feed;
-        previousGearRatio = gearRatio;
+        previousDriveRatio = driveRatio;
 
         // service the stepper drive state machine
         stepperDrive->move();

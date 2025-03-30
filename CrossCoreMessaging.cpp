@@ -31,7 +31,7 @@ CrossCoreMessaging :: CrossCoreMessaging( void ) {
     queue_init(&poweron_queue, sizeof(bool), 4);
     queue_init(&reverse_queue, sizeof(bool), 4);
     queue_init(&corestatus_queue, sizeof(corestatus_t), 4);
-    queue_init(&gearratio_queue, sizeof(float), 4);  
+    queue_init(&driveratio_queue, sizeof(float), 4);  
     doorbell_core_command = multicore_doorbell_claim_unused((1 << NUM_CORES) - 1, true);
     doorbell_core_status = multicore_doorbell_claim_unused((1 << NUM_CORES) - 1, true);
 }

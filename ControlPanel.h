@@ -31,6 +31,7 @@
 #ifndef __CONTROL_PANEL_H
 #define __CONTROL_PANEL_H
 
+#include <cstdint>
 #include <cstddef>
 #include "pico/stdlib.h"
 #include "SPIBus.h"
@@ -123,6 +124,12 @@ typedef union KEY_REG
     struct KEY_BITS bit;
 } KEY_REG;
 
+typedef struct MESSAGE
+{
+    uint8_t message[8];
+    uint16_t displayTime;
+    const MESSAGE *next;
+} MESSAGE;
 
 class ControlPanel
 {

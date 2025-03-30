@@ -50,13 +50,13 @@ public:
     void pushPowerOnCommand(bool);
     void pushReverseCommand(bool);
     void pushCoreStatus(uint16_t*, bool*, bool*, bool*);
-    void pushGearRatioCommand(float);
+    void pushDriveRatioCommand(float);
 
     bool checkCoreStatus(uint16_t*, bool*, bool*, bool*);
     bool checkFeedCommand(FEED_THREAD*);
     bool checkPowerOnCommand(bool*);
     bool checkReverseCommand(bool*);
-    bool checkGearRatioCommand(float*);
+    bool checkDriveRatioCommand(float*);
 
     uint getDoorbellIrqNum(void);
 
@@ -64,7 +64,7 @@ public:
     queue_t poweron_queue;
     queue_t reverse_queue;
     queue_t corestatus_queue;
-    queue_t gearratio_queue;
+    queue_t driveratio_queue;
     int doorbell_core_command;
     int doorbell_core_status;
 };
@@ -84,8 +84,8 @@ inline void CrossCoreMessaging :: pushReverseCommand( bool reverse ) {
     multicore_doorbell_set_other_core(doorbell_core_command);
 }
 
-inline void CrossCoreMessaging :: pushGearRatioCommand( float gearRatio ) {
-    queue_try_add(&gearratio_queue, &gearRatio);
+inline void CrossCoreMessaging :: pushDriveRatioCommand( float driveRatio ) {
+    queue_try_add(&driveratio_queue, &driveRatio);
     multicore_doorbell_set_other_core(doorbell_core_command);
 }
 
@@ -129,8 +129,8 @@ inline bool CrossCoreMessaging :: checkReverseCommand( bool* reverse) {
     return rv;
 }
 
-inline bool CrossCoreMessaging :: checkGearRatioCommand( float* gearRatio ) {
-    bool rv = queue_try_remove(&gearratio_queue, gearRatio);
+inline bool CrossCoreMessaging :: checkDriveRatioCommand( float* driveRatio ) {
+    bool rv = queue_try_remove(&driveratio_queue, driveRatio);
     if(commandQueuesEmpty()) {
         multicore_doorbell_clear_current_core(doorbell_core_command);
     }

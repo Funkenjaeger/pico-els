@@ -28,50 +28,57 @@
 // SOFTWARE.
 
 
-#ifndef __USERINTERFACE_H
-#define __USERINTERFACE_H
+#ifndef __GEARBOX_H
+#define __GEARBOX_H
 
 #include "ControlPanel.h"
-#include "Core.h"
-#include "Tables.h"
-#include "CoreProxy.h"
-#include "Gearbox.h"
 
-class UserInterface
-{
-private:
-    ControlPanel *controlPanel;
-    Core *core;
-    FeedTableFactory *feedTableFactory;
-    Gearbox *gearbox;
-
-    bool metric;
-    bool thread;
-    bool reverse;
-
-    bool useGearbox;
-
-    FeedTable *feedTable;
-
-    KEY_REG keys;
-
-    GearboxState gearboxState;
-
-    const MESSAGE *message;
-    uint16_t messageTime;
-
-    const FEED_THREAD *loadFeedTable();
-    LED_REG calculateLEDs();
-    void setMessage(const MESSAGE *message);
-    void overrideMessage( void );
-    void clearMessage( void );
-
-public:
-    UserInterface(ControlPanel *controlPanel, Core *core, FeedTableFactory *feedTableFactory, Gearbox *gearbox);
-
-    void loop( void );
-
-    void panicStepBacklog( void );
+enum GearboxDirection {
+    FORWARD,
+    REVERSE
 };
 
-#endif // __USERINTERFACE_H
+enum GearboxFeedThread {
+    FEED,
+    THREAD
+};
+
+enum GearboxGear : int {
+    A = 0,
+    B = 1,
+    C = 2
+};
+
+const MESSAGE GEAR_MESSAGE[3] = {
+    {
+        .message = { BLANK, LETTER_G, LETTER_E, LETTER_A, LETTER_R, BLANK, LETTER_A, BLANK },
+        .displayTime = uint16_t(UI_REFRESH_RATE_HZ * 1.5)
+    }, 
+    {
+        .message = { BLANK, LETTER_G, LETTER_E, LETTER_A, LETTER_R, BLANK, LETTER_B, BLANK },
+        .displayTime = uint16_t(UI_REFRESH_RATE_HZ * 1.5)
+    },
+    {
+        .message = { BLANK, LETTER_G, LETTER_E, LETTER_A, LETTER_R, BLANK, LETTER_C, BLANK },
+        .displayTime = uint16_t(UI_REFRESH_RATE_HZ * 1.5)
+    }
+};
+
+typedef struct {
+    GearboxDirection direction;
+    GearboxFeedThread feed_thread;
+    GearboxGear gear;
+    float finalDriveRatio;
+} GearboxState;
+
+class Gearbox
+{
+private:
+    GearboxState state;
+
+public:
+    Gearbox(void);
+    bool getState(GearboxState*);
+};
+
+#endif // __GEARBOX_H
