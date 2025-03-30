@@ -5,10 +5,6 @@
 //
 // Copyright (c) 2025 Evan Dudzik
 //
-// This software is based on the Clough42 Electronic Leadscrew project under the MIT license
-// https://github.com/clough42/electronic-leadscrew
-// Leveraged portions of this software are Copyright (c) 2019 James Clough
-//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -27,47 +23,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __ENCODER_H
-#define __ENCODER_H
+#include "CoreProxy.h"
 
-#include <cstdint>
-#include "Configuration.h"
-#include "hardware/pio.h"
-#include "quadrature_encoder.pio.h"
-#include "pico/stdlib.h"
-
-#define _ENCODER_MAX_COUNT UINT32_MAX
-#define _ENCODER_RPM_CALC_HZ 10
-
-class Encoder
-{
-private:
-    int32_t previous;
-    uint16_t rpm;
-    PIO pio;
-    uint32_t pio_sm;
-    repeating_timer timer;
-    friend bool encoder_timer_callback( repeating_timer *rt );
-
-public:
-    Encoder( void );
-    void initHardware( void );
-
-    uint16_t getRPM( void );
-    int32_t getPosition( void );
-    uint32_t getMaxCount( void );
-};
-
-inline uint32_t Encoder :: getMaxCount(void)
-{
-    return _ENCODER_MAX_COUNT;
+CoreProxy :: CoreProxy ( CrossCoreMessaging* xCore ) {
+    this->xCore = xCore;
+    isAlarm = false;
+    isPanic = false;
 }
-
-inline uint16_t Encoder :: getRPM(void)
-{
-    return rpm;
-}
-
-bool encoder_timer_callback( repeating_timer *rt );
-
-#endif // __ENCODER_H

@@ -40,7 +40,7 @@
 //================================================================================
 
 // For Imperial leadscrews: pitch in Threads Per Inch (TPI)
-#define LEADSCREW_TPI 16 // This is with the gearbox set to THREAD (not feed) on speed C (lowest gear)
+#define LEADSCREW_TPI 8
 
 // For metric leadscrews: pitch in hundredths of a millimeter (HMM)
 // Example: 200hmm = 2mm
@@ -92,6 +92,9 @@
 // Encoder resolution (counts per revolution)
 #define ENCODER_RESOLUTION 6144 //= 1024 PPR * 4 counts/pulse * 60 T spindle pulley / 40 T encoder pulley
 
+// Uncomment to reverse encoder direction
+#define REVERSE_ENCODER
+
 //================================================================================
 //                                FEATURES
 //
@@ -131,10 +134,8 @@
 // RPM recalculation rate, in Hz
 #define RPM_CALC_RATE_HZ 2
 
-// Microprocessor system clock
-#define CPU_CLOCK_MHZ 100
-#define CPU_CLOCK_HZ (CPU_CLOCK_MHZ * 1000000)
-
+// Tick period for control panel interface in microseconds.  The resulting clock
+// period will be twice this value.
 #define CONTROL_PANEL_CLK_CYCLE_US 5
 
 //================================================================================
@@ -149,13 +150,13 @@
 #define STEPPER_ALARM_PIN       9
 
 // Spindle encoder inputs
-#define QUADRATURE_A_PIN 16
-#define QUADRATURE_B_PIN 17
+#define QUADRATURE_A_PIN 28
+#define QUADRATURE_B_PIN 27
 
 // Control panel I/O
-#define CONTROL_PANEL_STB_PIN 2
-#define CONTROL_PANEL_DO_PIN 4
-#define CONTROL_PANEL_CLK_PIN 3
-#define CONTROL_PANEL_DI_PIN 5
+#define CONTROL_PANEL_STB_PIN 16
+#define CONTROL_PANEL_DO_PIN 19
+#define CONTROL_PANEL_CLK_PIN 17
+#define CONTROL_PANEL_DI_PIN 18
 
 #endif // __CONFIGURATION_H

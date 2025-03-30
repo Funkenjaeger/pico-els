@@ -37,14 +37,7 @@
 #include "ControlPanel.h"
 #include "Tables.h"
 
-#define USE_FLOATING_POINT
-
-#ifdef USE_FLOATING_POINT
-    #define NULL_FEED 0.0
-#else
-    #define NULL_FEED NULL
-#endif
-
+#define NULL_FEED 0.0
 
 class Core
 {
@@ -52,68 +45,69 @@ private:
     Encoder *encoder;
     StepperDrive *stepperDrive;
 
-#ifdef USE_FLOATING_POINT
     float feed;
     float previousFeed;
-#else
-    const FEED_THREAD *feed;
-    const FEED_THREAD *previousFeed;
-#endif // USE_FLOATING_POINT
+
+    float gearRatio;
+    float previousGearRatio;
 
     int16_t feedDirection;
     int16_t previousFeedDirection;
 
     int32_t previousSpindlePosition;
 
-    int32_t feedRatio(int32_t count);
-
     bool powerOn;
 
+    int32_t feedRatio(int32_t count);
+
+protected:
+    Core(void);    
+
 public:
-    Core( Encoder *encoder, StepperDrive *stepperDrive );
+    Core( Encoder *encoder, StepperDrive *stepperDrive );    
 
-    void setFeed(const FEED_THREAD *feed);
-    void setReverse(bool reverse);
-    uint16_t getRPM(void);
-    bool isAlarm();
+    virtual void setFeed(const FEED_THREAD*);
+    virtual void setReverse(bool reverse);
+    virtual void setPowerOn(bool);
+    virtual void setGearRatio(float gearRatio);
 
-    bool isPowerOn();
-    void setPowerOn(bool);
+    virtual uint16_t getRPM(void);
+    virtual bool getIsAlarm(void);
+    virtual bool getIsPowerOn(void);
+    virtual bool getIsPanic(void);
 
     void ISR( void );
 };
 
 inline void Core :: setFeed(const FEED_THREAD *feed)
 {
-#ifdef USE_FLOATING_POINT
-    this->feed = (float)feed->numerator / feed->denominator;
-#else
-    this->feed = feed;
-#endif // USE_FLOATING_POINT
+    this->feed = (float)feed->numerator / (float) feed->denominator;
 }
 
-inline uint16_t Core :: getRPM(void)
+inline void Core :: setGearRatio(float gearRatio)
 {
-    return encoder->getRPM();
-}
-
-inline bool Core :: isAlarm()
-{
-    return this->stepperDrive->isAlarm();
-}
-
-inline bool Core :: isPowerOn()
-{
-    return this->powerOn;
+    this->gearRatio = gearRatio;
 }
 
 inline int32_t Core :: feedRatio(int32_t count)
 {
-#ifdef USE_FLOATING_POINT
-    return ((float)count) * this->feed * feedDirection;
-#else // USE_FLOATING_POINT
-    return ((int64_t)count * (int64_t)(feed->numerator) / (int64_t)(feed->denominator)) * feedDirection;
-#endif // USE_FLOATING_POINT
+    return (int32_t)((double)count * this->feed * this->gearRatio) * feedDirection;
+}
+
+inline uint16_t Core :: getRPM(void) {
+    return encoder->getRPM();
+}
+
+inline bool Core :: getIsAlarm(void) {
+    return stepperDrive->isAlarm();
+}
+
+inline bool Core :: getIsPowerOn(void) {
+    return powerOn;
+}
+
+inline bool Core :: getIsPanic(void) {
+    return stepperDrive->checkStepBacklog();
 }
 
 #endif // __CORE_H

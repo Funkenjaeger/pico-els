@@ -15,9 +15,9 @@ if(WIN32)
 else()
     set(USERHOME $ENV{HOME})
 endif()
-set(sdkVersion 2.1.0)
-set(toolchainVersion 13_3_Rel1)
-set(picotoolVersion 2.1.0)
+set(sdkVersion 2.1.1)
+set(toolchainVersion 14_2_Rel1)
+set(picotoolVersion 2.1.1)
 set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
 if (EXISTS ${picoVscode})
     include(${picoVscode})
@@ -42,7 +42,8 @@ pico_set_program_version(pico-els "0.1")
 
 # Generate PIO headers
 pico_generate_pio_header(pico-els ${CMAKE_CURRENT_LIST_DIR}/blink.pio)
-pico_generate_pio_header(pico-els ${CMAKE_CURRENT_LIST_DIR}/quadrature.pio)
+pico_generate_pio_header(pico-els ${CMAKE_CURRENT_LIST_DIR}/stepper.pio)
+pico_generate_pio_header(pico-els ${CMAKE_CURRENT_LIST_DIR}/quadrature_encoder.pio)
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(pico-els 1)
@@ -70,9 +71,16 @@ add_library(core INTERFACE)
 target_sources(core INTERFACE ${CMAKE_CURRENT_LIST_DIR}/Core.cpp)
 add_library(ui INTERFACE)
 target_sources(ui INTERFACE ${CMAKE_CURRENT_LIST_DIR}/UserInterface.cpp)
+add_library(core_proxy INTERFACE)
+target_sources(core_proxy INTERFACE ${CMAKE_CURRENT_LIST_DIR}/CoreProxy.cpp)
+add_library(multicore_core INTERFACE)
+target_sources(multicore_core INTERFACE ${CMAKE_CURRENT_LIST_DIR}/MulticoreCore.cpp)
+add_library(cross_core_messaging INTERFACE)
+target_sources(cross_core_messaging INTERFACE ${CMAKE_CURRENT_LIST_DIR}/CrossCoreMessaging.cpp)
 
 # Add any user requested libraries
 target_link_libraries(pico-els 
+        pico_multicore
         hardware_spi
         hardware_i2c
         hardware_pio
@@ -83,6 +91,9 @@ target_link_libraries(pico-els
         pico_controlpanel
         pico_stepperdrive
         feedtable
+        core_proxy
+        multicore_core
+        cross_core_messaging
         core
         ui)
 

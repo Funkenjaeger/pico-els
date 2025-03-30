@@ -30,12 +30,10 @@
 #ifndef __SANITYCHECK_H
 #define __SANITYCHECK_H
 
-// TODO: can't use #error directives like this with CMake!
-
 // Sanity checks to check for common configuration errors
-/*
+
 #if STEPPER_CYCLE_US < 5 || STEPPER_CYCLE_US > 100
-message(FATAL_ERROR "STEPPER_CYCLE_US must be between 5ms and 100ms") 
+message(FATAL_ERROR "STEPPER_CYCLE_US must be between 5us and 100us") 
 #endif
 
 #if UI_REFRESH_RATE_HZ < 3 || UI_REFRESH_RATE_HZ > 100
@@ -46,22 +44,17 @@ message(FATAL_ERROR "STEPPER_CYCLE_US must be between 5ms and 100ms")
 #error RPM_CALC_RATE_HZ must be between 1Hz and 10Hz
 #endif
 
-#if CPU_CLOCK_HZ < 1000000 || CPU_CLOCK_HZ > 500000000
-#error CPU_CLOCK_HZ must be between 1MHz and 500MHz
-#endif
-
 #if STEPPER_MICROSTEPS < 1 || STEPPER_MICROSTEPS > 256
 #error STEPPER_MICROSTEPS must be between 1 and 256
 #endif
 
 #if STEPPER_RESOLUTION < 1 || STEPPER_RESOLUTION > 2000
-#error STEPPER_RESOLUTION must be between 100 and 2000
+#error STEPPER_RESOLUTION must be between 1 and 2000
 #endif
 
-// EMD: Commenting this test out because my ENCODER_RESOLUTION is not an integer
-//#if ENCODER_RESOLUTION < 100 || ENCODER_RESOLUTION > 10000
-//#error ENCODER_RESOLUTION must be between 100 and 10000
-//#endif
+#if ENCODER_RESOLUTION < 100 || ENCODER_RESOLUTION > 10000
+#error ENCODER_RESOLUTION must be between 100 and 10000
+#endif
 
 #if defined(LEADSCREW_TPI) && defined(LEADSCREW_HMM)
 #error LEADSCREW_TPI and LEADSCREW_HMM may not both be defined.  Choose only one.
@@ -78,9 +71,5 @@ message(FATAL_ERROR "STEPPER_CYCLE_US must be between 5ms and 100ms")
 #error LEADSCREW_HMM must be between 50 (0.5mm) and 700 (7mm)
 #endif
 #endif
-
-#if defined(ENCODER_USE_EQEP1) && defined (ENCODER_USE_EQEP2)
-#error Define only one of ENCODER_USE_EQEP1 or ENCODER_USE_EQEP2
-#endif*/
 
 #endif // __SANITYCHECK_H

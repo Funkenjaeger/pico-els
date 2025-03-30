@@ -32,43 +32,13 @@
 #define __STEPPERDRIVE_H
 
 #include <cmath>
+#include <algorithm>
 #include <cstdint>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "Configuration.h"
-
-#define GPIO_SET(pin) gpio_put(pin, true)
-#define GPIO_CLEAR(pin) gpio_put(pin, false)
-
-#ifdef INVERT_STEP_PIN
-#define GPIO_SET_STEP GPIO_CLEAR(STEPPER_STEP_PIN)
-#define GPIO_CLEAR_STEP GPIO_SET(STEPPER_STEP_PIN)
-#else
-#define GPIO_SET_STEP GPIO_SET(STEPPER_STEP_PIN)
-#define GPIO_CLEAR_STEP GPIO_CLEAR(STEPPER_STEP_PIN)
-#endif
-
-#ifdef INVERT_DIRECTION_PIN
-#define GPIO_SET_DIRECTION GPIO_CLEAR(STEPPER_DIRECTION_PIN)
-#define GPIO_CLEAR_DIRECTION GPIO_SET(STEPPER_DIRECTION_PIN)
-#else
-#define GPIO_SET_DIRECTION GPIO_SET(STEPPER_DIRECTION_PIN)
-#define GPIO_CLEAR_DIRECTION GPIO_CLEAR(STEPPER_DIRECTION_PIN)
-#endif
-
-#ifdef INVERT_ENABLE_PIN
-#define GPIO_SET_ENABLE GPIO_CLEAR(STEPPER_ENABLE_PIN)
-#define GPIO_CLEAR_ENABLE GPIO_SET(STEPPER_ENABLE_PIN)
-#else
-#define GPIO_SET_ENABLE GPIO_SET(STEPPER_ENABLE_PIN)
-#define GPIO_CLEAR_ENABLE GPIO_CLEAR(STEPPER_ENABLE_PIN)
-#endif
-
-#ifdef INVERT_ALARM_PIN
-#define GPIO_GET_ALARM (gpio_get(STEPPER_ALARM_PIN) == 0)
-#else
-#define GPIO_GET_ALARM (gpio_get(STEPPER_ALARM_PIN) != 0)
-#endif
+#include "hardware/pio.h"
+#include "stepper.pio.h"
 
 
 class StepperDrive
@@ -84,17 +54,15 @@ private:
     //
     int32_t desiredPosition;
 
-    //
-    // current state-machine state
-    // bit 0 - step signal
-    // bit 1 - direction signal
-    //
-    uint16_t state;
+    bool previousDir;
 
     //
     // Is the drive enabled?
     //
     bool enabled;
+
+    PIO pio;
+    uint32_t pio_sm;
 
 public:
     StepperDrive();
@@ -110,7 +78,8 @@ public:
 
     bool isAlarm();
 
-    void ISR(void);
+    void move(void);
+    bool busy(void);
 };
 
 inline void StepperDrive :: setDesiredPosition(int32_t steps)
@@ -152,52 +121,26 @@ inline bool StepperDrive :: isAlarm()
 #endif
 }
 
+inline bool StepperDrive :: busy(void) {
+    return !pio_interrupt_get(pio, 0);
+}
 
-inline void StepperDrive :: ISR(void)
+inline void StepperDrive :: move(void)
 {
     if(enabled) {
-
-        switch( this->state ) {
-
-        case 0:
-            // Step = 0; Dir = 0
-            if( this->desiredPosition < this->currentPosition ) {
-                GPIO_SET_STEP;
-                this->state = 2;
+        int32_t delta = desiredPosition - currentPosition;
+        uint32_t stepsToTake = std::min(abs(delta),32);
+        bool dir = delta > 0;
+        
+        if(stepsToTake != 0 && !busy()) {
+            if(dir != previousDir){
+                gpio_put(STEPPER_DIRECTION_PIN, dir);
+                previousDir = dir;
+                busy_wait_us(STEPPER_CYCLE_US); 
             }
-            else if( this->desiredPosition > this->currentPosition ) {
-                GPIO_SET_DIRECTION;
-                this->state = 1;
-            }
-            break;
-
-        case 1:
-            // Step = 0; Dir = 1
-            if( this->desiredPosition > this->currentPosition ) {
-                GPIO_SET_STEP;
-                this->state = 3;
-            }
-            else if( this->desiredPosition < this->currentPosition ) {
-                GPIO_CLEAR_DIRECTION;
-                this->state = 0;
-            }
-            break;
-
-        case 2:
-            // Step = 1; Dir = 0
-            GPIO_CLEAR_STEP;
-            this->currentPosition--;
-            this->state = 0;
-            break;
-
-        case 3:
-            // Step = 1; Dir = 1
-            GPIO_CLEAR_STEP;
-            this->currentPosition++;
-            this->state = 1;
-            break;
+            pio_sm_put_blocking(pio, pio_sm, (uint32_t)0xFFFFFFFF >> (uint32_t)(32-stepsToTake));
+            currentPosition += stepsToTake * (dir ? 1 : -1);
         }
-
     } else {
         // not enabled; just keep current position in sync
         this->currentPosition = this->desiredPosition;

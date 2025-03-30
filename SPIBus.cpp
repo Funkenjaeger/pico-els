@@ -43,39 +43,39 @@ void SPIBus :: initHardware(void)
 {
     gpio_init(CONTROL_PANEL_DO_PIN);
     gpio_init(CONTROL_PANEL_DI_PIN);
-    gpio_init(CONTROL_PANEL_CLK_PIN);    
-    gpio_put(CONTROL_PANEL_DO_PIN, false);
-    gpio_put(CONTROL_PANEL_CLK_PIN, false);    
+    gpio_init(CONTROL_PANEL_CLK_PIN);
+    gpio_put(CONTROL_PANEL_CLK_PIN, true);    
     gpio_set_dir(CONTROL_PANEL_DI_PIN, GPIO_IN);
-    gpio_set_dir(CONTROL_PANEL_DO_PIN, GPIO_OUT);
+    gpio_set_dir(CONTROL_PANEL_DO_PIN, GPIO_IN);
     gpio_set_dir(CONTROL_PANEL_CLK_PIN, GPIO_OUT);
-    gpio_pull_up(CONTROL_PANEL_DI_PIN);
 }
 
 void SPIBus :: sendWord(uint8_t data)
 {
     uint8_t i;
-    // Note: inverted output logic for NPN open-collector drivers
+    gpio_set_dir(CONTROL_PANEL_DO_PIN, GPIO_OUT);
     for (i = 0; i < 8; i++)  {
-        gpio_put(CONTROL_PANEL_DO_PIN, !bool(data & (1 << i)));  
-        gpio_put(CONTROL_PANEL_CLK_PIN, true);
-        busy_wait_us(CONTROL_PANEL_CLK_CYCLE_US);
+        gpio_put(CONTROL_PANEL_DO_PIN, bool(data & (1 << i)));  
         gpio_put(CONTROL_PANEL_CLK_PIN, false);
         busy_wait_us(CONTROL_PANEL_CLK_CYCLE_US);
+        gpio_put(CONTROL_PANEL_CLK_PIN, true);
+        busy_wait_us(CONTROL_PANEL_CLK_CYCLE_US);
     }
-    gpio_put(CONTROL_PANEL_DO_PIN, false); // release bus
+    gpio_set_dir(CONTROL_PANEL_DO_PIN, GPIO_IN); // release bus
+    gpio_put(CONTROL_PANEL_CLK_PIN, false);
 }
 
 uint8_t SPIBus :: receiveWord(void) 
 {
     uint8_t rxword = 0;
     uint8_t i = 0;
-
+    
+    gpio_set_dir(CONTROL_PANEL_DO_PIN, GPIO_IN); // release bus
     for(i = 0; i < 8; ++i) {
         
         gpio_put(CONTROL_PANEL_CLK_PIN, true);
         busy_wait_us(CONTROL_PANEL_CLK_CYCLE_US);
-        rxword |= !gpio_get(CONTROL_PANEL_DI_PIN) << i;
+        rxword |= gpio_get(CONTROL_PANEL_DO_PIN) << i;
         gpio_put(CONTROL_PANEL_CLK_PIN, false);
         busy_wait_us(CONTROL_PANEL_CLK_CYCLE_US);
     }

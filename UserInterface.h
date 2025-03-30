@@ -35,6 +35,7 @@
 #include "ControlPanel.h"
 #include "Core.h"
 #include "Tables.h"
+#include "CoreProxy.h"
 
 typedef struct MESSAGE
 {
